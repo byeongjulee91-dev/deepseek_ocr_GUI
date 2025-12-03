@@ -116,6 +116,31 @@ class AppConfig:
         """Save splitter state"""
         self.settings.setValue("ui/splitter_state", state)
 
+    # Font Size Configuration
+    def get_font_size(self) -> int:
+        """Get application font size for result viewer"""
+        return self.settings.value("ui/font_size", 12, type=int)
+
+    def set_font_size(self, size: int):
+        """Set application font size for result viewer"""
+        self.settings.setValue("ui/font_size", size)
+
+    def get_log_font_size(self) -> int:
+        """Get font size for log viewer"""
+        return self.settings.value("ui/log_font_size", 11, type=int)
+
+    def set_log_font_size(self, size: int):
+        """Set font size for log viewer"""
+        self.settings.setValue("ui/log_font_size", size)
+
+    def get_ui_font_size(self) -> int:
+        """Get font size for UI elements (Control Panel, buttons, labels)"""
+        return self.settings.value("ui/ui_font_size", 12, type=int)
+
+    def set_ui_font_size(self, size: int):
+        """Set font size for UI elements"""
+        self.settings.setValue("ui/ui_font_size", size)
+
     # Advanced Settings
     def get_include_caption(self) -> bool:
         """Get include caption setting"""

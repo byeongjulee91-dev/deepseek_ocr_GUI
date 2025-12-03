@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QTabWidget,
     QWidget, QLabel, QLineEdit, QSpinBox, QCheckBox,
     QPushButton, QFormLayout, QGroupBox, QFileDialog,
-    QMessageBox
+    QMessageBox, QSlider
 )
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QFont
@@ -274,6 +274,88 @@ class SettingsDialog(QDialog):
         tab = QWidget()
         layout = QVBoxLayout()
 
+        # Font Size group
+        font_group = QGroupBox("Font Size Settings")
+        font_layout = QFormLayout()
+
+        # Result viewer font size
+        result_font_layout = QHBoxLayout()
+        self.font_size_spin = QSpinBox()
+        self.font_size_spin.setMinimum(8)
+        self.font_size_spin.setMaximum(24)
+        self.font_size_spin.setSingleStep(1)
+        self.font_size_spin.setSuffix(" pt")
+        self.font_size_spin.setToolTip("Font size for OCR result text (8-24pt)")
+        self.font_size_spin.valueChanged.connect(self.on_font_size_changed)
+        result_font_layout.addWidget(self.font_size_spin)
+
+        self.font_size_slider = QSlider(Qt.Horizontal)
+        self.font_size_slider.setMinimum(8)
+        self.font_size_slider.setMaximum(24)
+        self.font_size_slider.setTickPosition(QSlider.TicksBelow)
+        self.font_size_slider.setTickInterval(2)
+        self.font_size_slider.valueChanged.connect(self.font_size_spin.setValue)
+        self.font_size_spin.valueChanged.connect(self.font_size_slider.setValue)
+        result_font_layout.addWidget(self.font_size_slider)
+
+        font_layout.addRow("Result Text:", result_font_layout)
+
+        # Log viewer font size
+        log_font_layout = QHBoxLayout()
+        self.log_font_size_spin = QSpinBox()
+        self.log_font_size_spin.setMinimum(8)
+        self.log_font_size_spin.setMaximum(20)
+        self.log_font_size_spin.setSingleStep(1)
+        self.log_font_size_spin.setSuffix(" pt")
+        self.log_font_size_spin.setToolTip("Font size for log viewer (8-20pt)")
+        self.log_font_size_spin.valueChanged.connect(self.on_log_font_size_changed)
+        log_font_layout.addWidget(self.log_font_size_spin)
+
+        self.log_font_size_slider = QSlider(Qt.Horizontal)
+        self.log_font_size_slider.setMinimum(8)
+        self.log_font_size_slider.setMaximum(20)
+        self.log_font_size_slider.setTickPosition(QSlider.TicksBelow)
+        self.log_font_size_slider.setTickInterval(2)
+        self.log_font_size_slider.valueChanged.connect(self.log_font_size_spin.setValue)
+        self.log_font_size_spin.valueChanged.connect(self.log_font_size_slider.setValue)
+        log_font_layout.addWidget(self.log_font_size_slider)
+
+        font_layout.addRow("Log Viewer:", log_font_layout)
+
+        # UI font size (Control Panel, buttons, labels)
+        ui_font_layout = QHBoxLayout()
+        self.ui_font_size_spin = QSpinBox()
+        self.ui_font_size_spin.setMinimum(10)
+        self.ui_font_size_spin.setMaximum(18)
+        self.ui_font_size_spin.setSingleStep(1)
+        self.ui_font_size_spin.setSuffix(" pt")
+        self.ui_font_size_spin.setToolTip("Font size for Control Panel and UI elements (10-18pt)")
+        ui_font_layout.addWidget(self.ui_font_size_spin)
+
+        self.ui_font_size_slider = QSlider(Qt.Horizontal)
+        self.ui_font_size_slider.setMinimum(10)
+        self.ui_font_size_slider.setMaximum(18)
+        self.ui_font_size_slider.setTickPosition(QSlider.TicksBelow)
+        self.ui_font_size_slider.setTickInterval(1)
+        self.ui_font_size_slider.valueChanged.connect(self.ui_font_size_spin.setValue)
+        self.ui_font_size_spin.valueChanged.connect(self.ui_font_size_slider.setValue)
+        ui_font_layout.addWidget(self.ui_font_size_slider)
+
+        font_layout.addRow("Control Panel:", ui_font_layout)
+
+        # Preview label
+        self.font_preview_label = QLabel("AaBbCc 가나다라 123 - Preview text")
+        self.font_preview_label.setStyleSheet("""
+            padding: 10px;
+            background-color: #2d2d2d;
+            border-radius: 4px;
+            color: #d4d4d4;
+        """)
+        font_layout.addRow("Preview:", self.font_preview_label)
+
+        font_group.setLayout(font_layout)
+        layout.addWidget(font_group)
+
         # Window group
         window_group = QGroupBox("Window Settings")
         window_layout = QVBoxLayout()
@@ -312,6 +394,15 @@ class SettingsDialog(QDialog):
         tab.setLayout(layout)
         return tab
 
+    def on_font_size_changed(self, size: int):
+        """Update preview label with new font size"""
+        font = QFont("Courier New", size)
+        self.font_preview_label.setFont(font)
+
+    def on_log_font_size_changed(self, size: int):
+        """Handle log font size change (for preview only)"""
+        pass  # Preview only uses result font size
+
     def load_settings(self):
         """Load current settings from config"""
         # Model settings
@@ -329,7 +420,21 @@ class SettingsDialog(QDialog):
         self.pdf_dpi_spin.setValue(self.config.get_pdf_dpi())
         self.extract_images_check.setChecked(self.config.get_pdf_extract_images())
 
-        # UI settings
+        # UI settings - Font sizes
+        font_size = self.config.get_font_size()
+        self.font_size_spin.setValue(font_size)
+        self.font_size_slider.setValue(font_size)
+        self.on_font_size_changed(font_size)  # Update preview
+
+        log_font_size = self.config.get_log_font_size()
+        self.log_font_size_spin.setValue(log_font_size)
+        self.log_font_size_slider.setValue(log_font_size)
+
+        ui_font_size = self.config.get_ui_font_size()
+        self.ui_font_size_spin.setValue(ui_font_size)
+        self.ui_font_size_slider.setValue(ui_font_size)
+
+        # UI settings - Window
         self.restore_geometry_check.setChecked(True)  # Always enabled for now
         self.restore_splitter_check.setChecked(True)
 
@@ -385,6 +490,11 @@ class SettingsDialog(QDialog):
         self.config.set_pdf_dpi(self.pdf_dpi_spin.value())
         self.config.set_pdf_extract_images(self.extract_images_check.isChecked())
 
+        # UI settings - Font sizes
+        self.config.set_font_size(self.font_size_spin.value())
+        self.config.set_log_font_size(self.log_font_size_spin.value())
+        self.config.set_ui_font_size(self.ui_font_size_spin.value())
+
         # Sync to disk
         self.config.sync()
 
@@ -393,7 +503,7 @@ class SettingsDialog(QDialog):
             self,
             "Settings Saved",
             "Settings have been saved successfully!\n\n"
-            "Note: Some changes may require restarting the application."
+            "Font size changes will be applied immediately."
         )
 
         self.accept()
@@ -421,6 +531,15 @@ class SettingsDialog(QDialog):
             self.include_caption_check.setChecked(False)
             self.pdf_dpi_spin.setValue(144)
             self.extract_images_check.setChecked(True)
+
+            # Reset font sizes to defaults
+            self.font_size_spin.setValue(12)
+            self.font_size_slider.setValue(12)
+            self.log_font_size_spin.setValue(11)
+            self.log_font_size_slider.setValue(11)
+            self.ui_font_size_spin.setValue(12)
+            self.ui_font_size_slider.setValue(12)
+            self.on_font_size_changed(12)  # Update preview
 
             QMessageBox.information(
                 self,

@@ -15,8 +15,10 @@ import logging
 class LogViewerWidget(QWidget):
     """Widget for displaying application logs in real-time"""
 
-    def __init__(self, parent=None):
+    def __init__(self, config=None, parent=None):
         super().__init__(parent)
+        self.config = config
+        self._font_size = 11  # Default font size
         self.setup_ui()
 
         # Log level colors
@@ -75,16 +77,10 @@ class LogViewerWidget(QWidget):
         self.log_text = QTextEdit()
         self.log_text.setReadOnly(True)
         self.log_text.setLineWrapMode(QTextEdit.NoWrap)
-        self.log_text.setStyleSheet("""
-            QTextEdit {
-                background-color: #1e1e1e;
-                color: #d4d4d4;
-                font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-                font-size: 11px;
-                border: 1px solid #3c3c3c;
-                padding: 5px;
-            }
-        """)
+
+        # Get font size from config
+        self._font_size = self.config.get_log_font_size() if self.config else 11
+        self._apply_log_style()
         layout.addWidget(self.log_text)
 
         # Status bar
@@ -197,3 +193,35 @@ class LogViewerWidget(QWidget):
     def get_log_count(self) -> int:
         """Get number of log lines"""
         return self.log_text.document().lineCount()
+
+    def _apply_log_style(self):
+        """Apply stylesheet with current font size"""
+        self.log_text.setStyleSheet(f"""
+            QTextEdit {{
+                background-color: #1e1e1e;
+                color: #d4d4d4;
+                font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+                font-size: {self._font_size}px;
+                border: 1px solid #3c3c3c;
+                padding: 5px;
+            }}
+        """)
+
+    def update_font_size(self, size: int = None):
+        """Update font size for log viewer
+
+        Args:
+            size: Font size in points. If None, reads from config.
+        """
+        if size is None and self.config:
+            size = self.config.get_log_font_size()
+        elif size is None:
+            size = 11  # Default
+
+        self._font_size = size
+        self._apply_log_style()
+
+    def refresh_settings(self):
+        """Refresh settings from config (call after settings dialog closes)"""
+        if self.config:
+            self.update_font_size(self.config.get_log_font_size())

@@ -20,15 +20,18 @@ from .bounding_box_canvas import ImageWithBoxesWidget
 class ResultViewerWidget(QWidget):
     """Widget for displaying OCR results"""
 
-    def __init__(self, parent=None):
+    def __init__(self, config=None, parent=None):
         """Initialize result viewer widget
 
         Args:
+            config: AppConfig instance for settings
             parent: Parent widget
         """
         super().__init__(parent)
+        self.config = config
         self.current_result = None
         self.current_image_path = None
+        self._font_size = 12  # Default font size
         self.setup_ui()
 
     def setup_ui(self):
@@ -85,8 +88,9 @@ class ResultViewerWidget(QWidget):
         self.result_text_edit.setReadOnly(True)
         self.result_text_edit.setWordWrapMode(QTextOption.WrapAtWordBoundaryOrAnywhere)
 
-        # Set monospace font for plain text
-        font = QFont("Courier New", 10)
+        # Set monospace font for plain text (get size from config)
+        self._font_size = self.config.get_font_size() if self.config else 12
+        font = QFont("Courier New", self._font_size)
         self.result_text_edit.setFont(font)
 
         layout.addWidget(self.result_text_edit)
@@ -132,7 +136,9 @@ class ResultViewerWidget(QWidget):
 
         self.raw_text_edit = QTextEdit()
         self.raw_text_edit.setReadOnly(True)
-        font = QFont("Courier New", 9)
+        # Debug tab uses slightly smaller font
+        debug_font_size = max(self._font_size - 2, 8)
+        font = QFont("Courier New", debug_font_size)
         self.raw_text_edit.setFont(font)
         layout.addWidget(self.raw_text_edit)
 
@@ -149,6 +155,34 @@ class ResultViewerWidget(QWidget):
 
         tab.setLayout(layout)
         return tab
+
+    def update_font_size(self, size: int = None):
+        """Update font size for all text editors
+
+        Args:
+            size: Font size in points. If None, reads from config.
+        """
+        if size is None and self.config:
+            size = self.config.get_font_size()
+        elif size is None:
+            size = 12  # Default
+
+        self._font_size = size
+
+        # Update main result text edit
+        font = QFont("Courier New", size)
+        self.result_text_edit.setFont(font)
+
+        # Update debug text edits (slightly smaller)
+        debug_font_size = max(size - 2, 8)
+        debug_font = QFont("Courier New", debug_font_size)
+        self.raw_text_edit.setFont(debug_font)
+        self.metadata_text_edit.setFont(debug_font)
+
+    def refresh_settings(self):
+        """Refresh settings from config (call after settings dialog closes)"""
+        if self.config:
+            self.update_font_size(self.config.get_font_size())
 
     def display_result(self, result: dict, image_path: str = None):
         """Display OCR result

@@ -115,10 +115,13 @@ class MainWindow(QMainWindow):
         panel = QWidget()
         layout = QVBoxLayout()
 
+        # Get UI font size from config
+        ui_font_size = self.config.get_ui_font_size()
+
         # Title
-        title = QLabel("📋 Control Panel")
-        title.setStyleSheet("font-size: 16px; font-weight: bold; padding: 10px;")
-        layout.addWidget(title)
+        self.control_panel_title = QLabel("📋 Control Panel")
+        self.control_panel_title.setStyleSheet(f"font-size: {ui_font_size + 4}px; font-weight: bold; padding: 10px;")
+        layout.addWidget(self.control_panel_title)
 
         # File type toggle (Image / PDF)
         file_type_widget = QWidget()
@@ -129,11 +132,13 @@ class MainWindow(QMainWindow):
 
         self.image_radio = QRadioButton("📸 Image")
         self.image_radio.setChecked(True)
+        self.image_radio.setStyleSheet(f"font-size: {ui_font_size}px;")
         self.image_radio.toggled.connect(lambda checked: self.on_file_type_changed('image') if checked else None)
         self.file_type_group.addButton(self.image_radio)
         file_type_layout.addWidget(self.image_radio)
 
         self.pdf_radio = QRadioButton("📄 PDF")
+        self.pdf_radio.setStyleSheet(f"font-size: {ui_font_size}px;")
         self.pdf_radio.toggled.connect(lambda checked: self.on_file_type_changed('pdf') if checked else None)
         self.file_type_group.addButton(self.pdf_radio)
         file_type_layout.addWidget(self.pdf_radio)
@@ -167,25 +172,7 @@ class MainWindow(QMainWindow):
         self.analyze_button = QPushButton("🔍 Analyze Image")
         self.analyze_button.setEnabled(False)
         self.analyze_button.setMinimumHeight(50)
-        self.analyze_button.setStyleSheet("""
-            QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                                            stop:0 #9333ea, stop:1 #06b6d4);
-                color: white;
-                border: none;
-                border-radius: 8px;
-                font-size: 14px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                                            stop:0 #7c3aed, stop:1 #0891b2);
-            }
-            QPushButton:disabled {
-                background: #555;
-                color: #888;
-            }
-        """)
+        self._apply_analyze_button_style(ui_font_size)
         self.analyze_button.clicked.connect(self.handle_analyze_clicked)
         layout.addWidget(self.analyze_button)
 
@@ -193,26 +180,15 @@ class MainWindow(QMainWindow):
         self.cancel_button = QPushButton("⏹️ Cancel Processing")
         self.cancel_button.setVisible(False)
         self.cancel_button.setMinimumHeight(40)
-        self.cancel_button.setStyleSheet("""
-            QPushButton {
-                background-color: #ef4444;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #dc2626;
-            }
-        """)
+        self._apply_cancel_button_style(ui_font_size)
         self.cancel_button.clicked.connect(self.handle_cancel_clicked)
         layout.addWidget(self.cancel_button)
 
         # Info label
-        info_label = QLabel("ℹ️ Upload an image to begin OCR processing")
-        info_label.setWordWrap(True)
-        info_label.setStyleSheet("padding: 10px; color: gray; font-size: 11px;")
-        layout.addWidget(info_label)
+        self.info_label = QLabel("ℹ️ Upload an image to begin OCR processing")
+        self.info_label.setWordWrap(True)
+        self.info_label.setStyleSheet(f"padding: 10px; color: gray; font-size: {ui_font_size - 1}px;")
+        layout.addWidget(self.info_label)
 
         layout.addStretch()
         panel.setLayout(layout)
@@ -237,11 +213,12 @@ class MainWindow(QMainWindow):
         result_layout = QVBoxLayout()
         result_layout.setContentsMargins(0, 0, 0, 0)
 
-        result_title = QLabel("📊 Result Viewer")
-        result_title.setStyleSheet("font-size: 16px; font-weight: bold; padding: 10px;")
-        result_layout.addWidget(result_title)
+        ui_font_size = self.config.get_ui_font_size()
+        self.result_title = QLabel("📊 Result Viewer")
+        self.result_title.setStyleSheet(f"font-size: {ui_font_size + 4}px; font-weight: bold; padding: 10px;")
+        result_layout.addWidget(self.result_title)
 
-        self.result_viewer = ResultViewerWidget()
+        self.result_viewer = ResultViewerWidget(config=self.config)
         result_layout.addWidget(self.result_viewer)
 
         result_container.setLayout(result_layout)
@@ -252,11 +229,11 @@ class MainWindow(QMainWindow):
         log_layout = QVBoxLayout()
         log_layout.setContentsMargins(0, 0, 0, 0)
 
-        log_title = QLabel("📋 Application Logs")
-        log_title.setStyleSheet("font-size: 16px; font-weight: bold; padding: 10px;")
-        log_layout.addWidget(log_title)
+        self.log_title = QLabel("📋 Application Logs")
+        self.log_title.setStyleSheet(f"font-size: {ui_font_size + 4}px; font-weight: bold; padding: 10px;")
+        log_layout.addWidget(self.log_title)
 
-        self.log_viewer = LogViewerWidget()
+        self.log_viewer = LogViewerWidget(config=self.config)
         log_layout.addWidget(self.log_viewer)
 
         log_container.setLayout(log_layout)
@@ -802,6 +779,14 @@ class MainWindow(QMainWindow):
         if dialog.exec():
             # Settings were saved, reload advanced settings
             self.advanced_settings.load_settings()
+
+            # Refresh font settings in viewers
+            self.result_viewer.refresh_settings()
+            self.log_viewer.refresh_settings()
+
+            # Refresh UI font sizes
+            self.refresh_ui_font_size()
+
             self.status_bar.showMessage("Settings updated")
 
     def clear_current_file(self):
@@ -842,6 +827,66 @@ class MainWindow(QMainWindow):
             # Update status bar
             status = "shown" if checked else "hidden"
             self.status_bar.showMessage(f"Log viewer {status}")
+
+    def _apply_analyze_button_style(self, font_size: int):
+        """Apply style to analyze button with given font size"""
+        self.analyze_button.setStyleSheet(f"""
+            QPushButton {{
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                                            stop:0 #9333ea, stop:1 #06b6d4);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: {font_size + 2}px;
+                font-weight: bold;
+            }}
+            QPushButton:hover {{
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                                            stop:0 #7c3aed, stop:1 #0891b2);
+            }}
+            QPushButton:disabled {{
+                background: #555;
+                color: #888;
+            }}
+        """)
+
+    def _apply_cancel_button_style(self, font_size: int):
+        """Apply style to cancel button with given font size"""
+        self.cancel_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: #ef4444;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-size: {font_size}px;
+                font-weight: bold;
+            }}
+            QPushButton:hover {{
+                background-color: #dc2626;
+            }}
+        """)
+
+    def refresh_ui_font_size(self):
+        """Refresh UI font sizes from config"""
+        ui_font_size = self.config.get_ui_font_size()
+
+        # Update Control Panel title
+        self.control_panel_title.setStyleSheet(f"font-size: {ui_font_size + 4}px; font-weight: bold; padding: 10px;")
+
+        # Update radio buttons
+        self.image_radio.setStyleSheet(f"font-size: {ui_font_size}px;")
+        self.pdf_radio.setStyleSheet(f"font-size: {ui_font_size}px;")
+
+        # Update buttons
+        self._apply_analyze_button_style(ui_font_size)
+        self._apply_cancel_button_style(ui_font_size)
+
+        # Update info label
+        self.info_label.setStyleSheet(f"padding: 10px; color: gray; font-size: {ui_font_size - 1}px;")
+
+        # Update Result Viewer and Log Viewer titles
+        self.result_title.setStyleSheet(f"font-size: {ui_font_size + 4}px; font-weight: bold; padding: 10px;")
+        self.log_title.setStyleSheet(f"font-size: {ui_font_size + 4}px; font-weight: bold; padding: 10px;")
 
     def restore_geometry(self):
         """Restore saved window geometry and state"""
