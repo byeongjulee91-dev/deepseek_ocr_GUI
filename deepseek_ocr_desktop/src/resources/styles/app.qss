@@ -285,11 +285,6 @@ QCheckBox::indicator:checked {
     image: url(none);
 }
 
-QCheckBox::indicator:checked::after {
-    content: "✓";
-    color: white;
-}
-
 /* Radio Button */
 QRadioButton {
     spacing: 8px;
