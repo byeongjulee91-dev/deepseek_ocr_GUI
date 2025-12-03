@@ -53,12 +53,16 @@ class ColoredFormatter(logging.Formatter):
     }
 
     def format(self, record):
-        # Add color to levelname
-        if record.levelname in self.COLORS:
+        """Apply ANSI colors only for this formatter without mutating record globally."""
+        original_levelname = record.levelname
+        if original_levelname in self.COLORS:
             record.levelname = (
-                f"{self.COLORS[record.levelname]}{record.levelname}{self.COLORS['RESET']}"
+                f"{self.COLORS[original_levelname]}{original_levelname}{self.COLORS['RESET']}"
             )
-        return super().format(record)
+        try:
+            return super().format(record)
+        finally:
+            record.levelname = original_levelname
 
 
 def setup_logger(name: str = "DeepSeekOCR", level: int = logging.DEBUG, gui_handler=None) -> logging.Logger:

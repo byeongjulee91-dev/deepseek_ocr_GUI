@@ -141,11 +141,23 @@ class LogViewerWidget(QWidget):
         message_format = QTextCharFormat()
         message_format.setForeground(QColor(212, 212, 212))
 
-        # Insert level
-        cursor.insertText(f"[{level:8s}] ", level_format)
+        # Align desktop log format with terminal output: time | level | logger | message
+        timestamp = ""
+        logger_name = ""
+        log_body = message
+        parts = message.split(" | ", 2)
+        if len(parts) == 3:
+            timestamp, logger_name, log_body = parts
 
-        # Insert message
-        cursor.insertText(message + "\n", message_format)
+        if timestamp:
+            cursor.insertText(f"{timestamp} | ", message_format)
+
+        cursor.insertText(f"{level:8s}", level_format)
+
+        if logger_name:
+            cursor.insertText(f" | {logger_name} | {log_body}\n", message_format)
+        else:
+            cursor.insertText(f" | {log_body}\n", message_format)
 
         # Auto-scroll
         if self.autoscroll_check.isChecked():
