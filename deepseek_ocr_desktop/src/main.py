@@ -56,6 +56,8 @@ def main():
     use_vllm = config.get_use_vllm()
     vllm_endpoint = config.get_vllm_endpoint()
     vllm_api_key = config.get_vllm_api_key()
+    vllm_timeout = config.get_vllm_timeout()
+    vllm_max_retries = config.get_vllm_max_retries()
 
     if use_vllm:
         app_logger.info(f"Configuration loaded - Mode: vLLM, Endpoint: {vllm_endpoint}, Model: {model_name}")
@@ -99,12 +101,15 @@ def main():
     # Start loading model or connecting to vLLM
     if use_vllm:
         app_logger.info(f"Connecting to vLLM endpoint: {vllm_endpoint}")
+        app_logger.debug(f"vLLM timeout: {vllm_timeout}s, max_retries: {vllm_max_retries}")
         model_manager.load_model_async(
             model_name,
             hf_home,
             use_vllm=True,
             vllm_endpoint=vllm_endpoint,
-            vllm_api_key=vllm_api_key
+            vllm_api_key=vllm_api_key,
+            vllm_timeout=vllm_timeout,
+            vllm_max_retries=vllm_max_retries
         )
     else:
         app_logger.info(f"Starting local model loading: {model_name}")

@@ -254,12 +254,22 @@ class PDFWorker(QThread):
             )
             logger.debug(f"Page {page_num} prompt built (length: {len(prompt)})")
 
-            # Create temporary output directory for model inference
+            # Create temporary output directory for model inference (local mode only)
             out_dir = tempfile.mkdtemp(prefix=f"dsocr_pdf_page{page_num}_")
             logger.debug(f"Page {page_num} output directory: {out_dir}")
 
-            # Save temp image for model inference
-            temp_img_path = f"/tmp/pdf_page_{page_num}.png"
+            # Create temporary image file (cross-platform compatible)
+            # Use delete=False to keep file until we manually delete it
+            temp_img_file = tempfile.NamedTemporaryFile(
+                mode='wb',
+                suffix='.png',
+                prefix=f'pdf_page_{page_num}_',
+                delete=False
+            )
+            temp_img_path = temp_img_file.name
+            temp_img_file.close()  # Close the file handle so PIL can write to it
+
+            # Save image to temporary file
             img.save(temp_img_path)
             logger.debug(f"Page {page_num} saved to: {temp_img_path}")
 
@@ -359,11 +369,16 @@ class PDFWorker(QThread):
         finally:
             # Cleanup temporary directory and image
             if out_dir and os.path.exists(out_dir):
+                logger.debug(f"Page {page_num}: Cleaning up output directory: {out_dir}")
                 shutil.rmtree(out_dir, ignore_errors=True)
+
             if temp_img_path and os.path.exists(temp_img_path):
                 try:
+                    logger.debug(f"Page {page_num}: Removing temporary image: {temp_img_path}")
                     os.remove(temp_img_path)
-                except:
+                except Exception as e:
+                    # On Windows, files may be locked by other processes
+                    logger.warning(f"Page {page_num}: Failed to remove temp file: {e}")
                     pass
 
 

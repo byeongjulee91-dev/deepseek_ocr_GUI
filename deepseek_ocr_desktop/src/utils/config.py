@@ -57,6 +57,22 @@ class AppConfig:
         """Set vLLM API key"""
         self.settings.setValue("vllm/api_key", api_key)
 
+    def get_vllm_timeout(self) -> float:
+        """Get vLLM request timeout in seconds (default: 300s = 5 minutes)"""
+        return float(self.settings.value("vllm/timeout", 300.0))
+
+    def set_vllm_timeout(self, timeout: float):
+        """Set vLLM request timeout in seconds"""
+        self.settings.setValue("vllm/timeout", timeout)
+
+    def get_vllm_max_retries(self) -> int:
+        """Get maximum retry attempts for network errors (default: 3)"""
+        return self.settings.value("vllm/max_retries", 3, type=int)
+
+    def set_vllm_max_retries(self, max_retries: int):
+        """Set maximum retry attempts for network errors"""
+        self.settings.setValue("vllm/max_retries", max_retries)
+
     # Processing Configuration
     def get_base_size(self) -> int:
         """Get base processing size"""

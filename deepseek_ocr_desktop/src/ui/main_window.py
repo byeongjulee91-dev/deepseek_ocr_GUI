@@ -429,6 +429,8 @@ class MainWindow(QMainWindow):
         endpoint = self.config.get_vllm_endpoint()
         api_key = self.config.get_vllm_api_key()
         model_name = self.config.get_model_name()
+        timeout = self.config.get_vllm_timeout()
+        max_retries = self.config.get_vllm_max_retries()
 
         # Show progress dialog
         progress = QProgressDialog("Checking vLLM connection...", None, 0, 0, self)
@@ -459,7 +461,9 @@ class MainWindow(QMainWindow):
                 client = VLLMClient(
                     endpoint=endpoint,
                     api_key=api_key if api_key else None,
-                    model_name=model_name
+                    model_name=model_name,
+                    timeout=timeout,
+                    max_retries=max_retries
                 )
 
                 # Test connection

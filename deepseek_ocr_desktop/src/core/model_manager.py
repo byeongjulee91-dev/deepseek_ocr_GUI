@@ -21,7 +21,8 @@ class ModelLoadWorker(QThread):
     error_signal = Signal(str)  # Error message
 
     def __init__(self, model_name: str, hf_home: str, use_vllm: bool = False,
-                 vllm_endpoint: str = "", vllm_api_key: str = ""):
+                 vllm_endpoint: str = "", vllm_api_key: str = "",
+                 vllm_timeout: float = 300.0, vllm_max_retries: int = 3):
         """Initialize worker with model configuration
 
         Args:
@@ -30,6 +31,8 @@ class ModelLoadWorker(QThread):
             use_vllm: Whether to use vLLM remote endpoint
             vllm_endpoint: vLLM endpoint URL
             vllm_api_key: vLLM API key (optional)
+            vllm_timeout: vLLM request timeout in seconds (default: 300)
+            vllm_max_retries: vLLM max retry attempts (default: 3)
         """
         super().__init__()
         self.model_name = model_name
@@ -37,6 +40,8 @@ class ModelLoadWorker(QThread):
         self.use_vllm = use_vllm
         self.vllm_endpoint = vllm_endpoint
         self.vllm_api_key = vllm_api_key
+        self.vllm_timeout = vllm_timeout
+        self.vllm_max_retries = vllm_max_retries
 
     def run(self):
         """Load model and tokenizer or connect to vLLM (runs in background thread)"""
@@ -49,7 +54,9 @@ class ModelLoadWorker(QThread):
                 vllm_client = VLLMClient(
                     endpoint=self.vllm_endpoint,
                     api_key=self.vllm_api_key if self.vllm_api_key else None,
-                    model_name=self.model_name
+                    model_name=self.model_name,
+                    timeout=self.vllm_timeout,
+                    max_retries=self.vllm_max_retries
                 )
 
                 # Test connection
@@ -138,7 +145,8 @@ class ModelManager(QObject):
         self.use_vllm = False
 
     def load_model_async(self, model_name: str, hf_home: str, use_vllm: bool = False,
-                         vllm_endpoint: str = "", vllm_api_key: str = ""):
+                         vllm_endpoint: str = "", vllm_api_key: str = "",
+                         vllm_timeout: float = 300.0, vllm_max_retries: int = 3):
         """Start loading model asynchronously (local or vLLM)
 
         Args:
@@ -147,6 +155,8 @@ class ModelManager(QObject):
             use_vllm: Whether to use vLLM remote endpoint
             vllm_endpoint: vLLM endpoint URL
             vllm_api_key: vLLM API key (optional)
+            vllm_timeout: vLLM request timeout in seconds (default: 300)
+            vllm_max_retries: vLLM max retry attempts (default: 3)
         """
         self.use_vllm = use_vllm
 
@@ -156,7 +166,9 @@ class ModelManager(QObject):
             hf_home,
             use_vllm=use_vllm,
             vllm_endpoint=vllm_endpoint,
-            vllm_api_key=vllm_api_key
+            vllm_api_key=vllm_api_key,
+            vllm_timeout=vllm_timeout,
+            vllm_max_retries=vllm_max_retries
         )
 
         # Connect signals

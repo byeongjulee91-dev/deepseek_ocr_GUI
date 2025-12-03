@@ -155,6 +155,22 @@ class SettingsDialog(QDialog):
         self.vllm_api_key_edit.setEchoMode(QLineEdit.Password)
         vllm_layout.addRow("API Key:", self.vllm_api_key_edit)
 
+        # Advanced vLLM settings
+        self.vllm_timeout_spin = QSpinBox()
+        self.vllm_timeout_spin.setMinimum(30)
+        self.vllm_timeout_spin.setMaximum(3600)  # 1 hour max
+        self.vllm_timeout_spin.setValue(300)
+        self.vllm_timeout_spin.setSuffix(" seconds")
+        self.vllm_timeout_spin.setToolTip("Request timeout for vLLM API calls (default: 300s = 5 minutes)")
+        vllm_layout.addRow("Request Timeout:", self.vllm_timeout_spin)
+
+        self.vllm_max_retries_spin = QSpinBox()
+        self.vllm_max_retries_spin.setMinimum(0)
+        self.vllm_max_retries_spin.setMaximum(10)
+        self.vllm_max_retries_spin.setValue(3)
+        self.vllm_max_retries_spin.setToolTip("Maximum retry attempts for network errors (default: 3)")
+        vllm_layout.addRow("Max Retries:", self.vllm_max_retries_spin)
+
         # Test Connection button
         self.test_connection_button = QPushButton("🔍 Test Connection")
         self.test_connection_button.setToolTip("Test connection to vLLM endpoint")
@@ -223,6 +239,8 @@ class SettingsDialog(QDialog):
         # Enable/disable vLLM fields
         self.vllm_endpoint_edit.setEnabled(checked)
         self.vllm_api_key_edit.setEnabled(checked)
+        self.vllm_timeout_spin.setEnabled(checked)
+        self.vllm_max_retries_spin.setEnabled(checked)
         self.test_connection_button.setEnabled(checked)
 
         # Enable/disable local model fields
@@ -239,6 +257,8 @@ class SettingsDialog(QDialog):
         endpoint = self.vllm_endpoint_edit.text().strip()
         api_key = self.vllm_api_key_edit.text().strip()
         model_name = self.model_name_edit.text().strip() or "deepseek-ai/DeepSeek-OCR"
+        timeout = float(self.vllm_timeout_spin.value())
+        max_retries = self.vllm_max_retries_spin.value()
 
         # Validate endpoint
         if not endpoint:
@@ -279,7 +299,9 @@ class SettingsDialog(QDialog):
                 client = VLLMClient(
                     endpoint=endpoint,
                     api_key=api_key if api_key else None,
-                    model_name=model_name
+                    model_name=model_name,
+                    timeout=timeout,
+                    max_retries=max_retries
                 )
 
                 # Test connection
@@ -555,6 +577,8 @@ class SettingsDialog(QDialog):
         self.use_vllm_check.setChecked(use_vllm)
         self.vllm_endpoint_edit.setText(self.config.get_vllm_endpoint())
         self.vllm_api_key_edit.setText(self.config.get_vllm_api_key())
+        self.vllm_timeout_spin.setValue(int(self.config.get_vllm_timeout()))
+        self.vllm_max_retries_spin.setValue(self.config.get_vllm_max_retries())
 
         # Trigger toggle to enable/disable fields
         self.on_use_vllm_toggled(use_vllm)
@@ -633,6 +657,8 @@ class SettingsDialog(QDialog):
         self.config.set_use_vllm(self.use_vllm_check.isChecked())
         self.config.set_vllm_endpoint(self.vllm_endpoint_edit.text())
         self.config.set_vllm_api_key(self.vllm_api_key_edit.text())
+        self.config.set_vllm_timeout(float(self.vllm_timeout_spin.value()))
+        self.config.set_vllm_max_retries(self.vllm_max_retries_spin.value())
 
         # Model settings
         self.config.set_model_name(self.model_name_edit.text())
@@ -691,6 +717,8 @@ class SettingsDialog(QDialog):
             self.use_vllm_check.setChecked(False)
             self.vllm_endpoint_edit.setText("http://localhost:8000/v1")
             self.vllm_api_key_edit.setText("")
+            self.vllm_timeout_spin.setValue(300)
+            self.vllm_max_retries_spin.setValue(3)
             self.on_use_vllm_toggled(False)
 
             # Model settings
