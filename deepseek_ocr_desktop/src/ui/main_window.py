@@ -331,6 +331,14 @@ class MainWindow(QMainWindow):
 
         help_menu.addSeparator()
 
+        # Check vLLM Connection action
+        check_vllm_action = QAction("Check vLLM &Connection", self)
+        check_vllm_action.setStatusTip("Test connection to vLLM endpoint")
+        check_vllm_action.triggered.connect(self.check_vllm_connection)
+        help_menu.addAction(check_vllm_action)
+
+        help_menu.addSeparator()
+
         # About action
         about_action = QAction("&About", self)
         about_action.setStatusTip("About DeepSeek-OCR Desktop")
@@ -393,6 +401,109 @@ class MainWindow(QMainWindow):
             "<li><b>Ctrl+Q</b> - Exit application</li>"
             "</ul>"
         )
+
+    def check_vllm_connection(self):
+        """Check vLLM connection health"""
+        from PySide6.QtWidgets import QMessageBox, QProgressDialog
+        from PySide6.QtCore import QTimer
+
+        # Check if vLLM is enabled
+        use_vllm = self.config.get_use_vllm()
+
+        if not use_vllm:
+            QMessageBox.information(
+                self,
+                "vLLM Not Enabled",
+                "vLLM remote inference is not enabled.\n\n"
+                "Current mode: Local Model\n\n"
+                "To use vLLM:\n"
+                "1. Go to Settings (Ctrl+,)\n"
+                "2. Navigate to Model tab\n"
+                "3. Enable 'Use vLLM remote endpoint'\n"
+                "4. Configure endpoint URL\n"
+                "5. Save and restart application"
+            )
+            return
+
+        # Get vLLM settings
+        endpoint = self.config.get_vllm_endpoint()
+        api_key = self.config.get_vllm_api_key()
+        model_name = self.config.get_model_name()
+
+        # Show progress dialog
+        progress = QProgressDialog("Checking vLLM connection...", None, 0, 0, self)
+        progress.setWindowTitle("Health Check")
+        progress.setWindowModality(Qt.WindowModal)
+        progress.setCancelButton(None)
+        progress.setMinimumDuration(0)
+        progress.setValue(0)
+
+        # Import VLLMClient
+        try:
+            from ..core.vllm_client import VLLMClient
+        except ImportError as e:
+            progress.close()
+            QMessageBox.critical(
+                self,
+                "Import Error",
+                f"Failed to import VLLMClient:\n{str(e)}\n\n"
+                "Make sure 'openai' package is installed:\n"
+                "pip install openai"
+            )
+            return
+
+        # Test connection
+        def do_test():
+            try:
+                # Create client
+                client = VLLMClient(
+                    endpoint=endpoint,
+                    api_key=api_key if api_key else None,
+                    model_name=model_name
+                )
+
+                # Test connection
+                success, message = client.test_connection()
+
+                # Close progress dialog
+                progress.close()
+
+                # Show result
+                if success:
+                    QMessageBox.information(
+                        self,
+                        "Connection Healthy",
+                        f"✅ vLLM connection is healthy!\n\n"
+                        f"{message}\n\n"
+                        f"Endpoint: {endpoint}\n"
+                        f"Model: {model_name}"
+                    )
+                    self.status_bar.showMessage("✅ vLLM connection healthy")
+                else:
+                    QMessageBox.warning(
+                        self,
+                        "Connection Unhealthy",
+                        f"❌ vLLM connection failed:\n\n{message}\n\n"
+                        f"Endpoint: {endpoint}\n\n"
+                        "Please check:\n"
+                        "• vLLM server is running\n"
+                        "• Endpoint URL is correct\n"
+                        "• Network connection is available\n"
+                        "• Firewall allows the connection"
+                    )
+                    self.status_bar.showMessage("❌ vLLM connection failed")
+
+            except Exception as e:
+                progress.close()
+                QMessageBox.critical(
+                    self,
+                    "Health Check Failed",
+                    f"Error checking connection:\n\n{type(e).__name__}: {str(e)}"
+                )
+                self.status_bar.showMessage("❌ Health check error")
+
+        # Run test after a short delay
+        QTimer.singleShot(100, do_test)
 
     def show_about(self):
         """Show about dialog"""

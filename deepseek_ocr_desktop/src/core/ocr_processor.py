@@ -1,6 +1,7 @@
 """
 OCR Processor
 QThread worker for running OCR inference in background
+Supports both local transformer model and remote vLLM endpoint
 Adapted from backend/main.py /api/ocr endpoint (lines 258-386)
 """
 
@@ -13,6 +14,7 @@ from PIL import Image
 
 from .prompt_builder import build_prompt
 from .coordinate_parser import parse_detections, clean_grounding_text
+from .vllm_client import VLLMClient
 from ..utils.logger import get_logger
 
 # Initialize logger
@@ -30,8 +32,8 @@ class OCRWorker(QThread):
         """Initialize OCR worker
 
         Args:
-            model: DeepSeek-OCR model
-            tokenizer: Model tokenizer
+            model: DeepSeek-OCR model or VLLMClient
+            tokenizer: Model tokenizer (None for vLLM mode)
             image_path: Path to image file
             params: Processing parameters dict with keys:
                 - mode: OCR mode
@@ -50,8 +52,10 @@ class OCRWorker(QThread):
         self.tokenizer = tokenizer
         self.image_path = image_path
         self.params = params
+        self.is_vllm = isinstance(model, VLLMClient)
 
         logger.info(f"OCRWorker initialized for: {image_path}")
+        logger.debug(f"Mode: {'vLLM' if self.is_vllm else 'Local'}")
         logger.debug(f"Parameters: {params}")
 
     def run(self):
@@ -107,18 +111,31 @@ class OCRWorker(QThread):
             logger.debug(f"OCR params: base_size={base_size}, image_size={image_size}, crop_mode={crop_mode}")
 
             # Run model inference (blocking call)
-            res = self.model.infer(
-                self.tokenizer,
-                prompt=prompt_text,
-                image_file=self.image_path,
-                output_path=out_dir,
-                base_size=base_size,
-                image_size=image_size,
-                crop_mode=crop_mode,
-                save_results=False,
-                test_compress=self.params.get('test_compress', False),
-                eval_mode=True,
-            )
+            if self.is_vllm:
+                # vLLM mode: Call remote API
+                logger.info("Using vLLM remote inference")
+                res = self.model.infer(
+                    prompt=prompt_text,
+                    image_file=self.image_path,
+                    base_size=base_size,
+                    image_size=image_size,
+                    crop_mode=crop_mode,
+                )
+            else:
+                # Local mode: Use transformer model
+                logger.info("Using local transformer model")
+                res = self.model.infer(
+                    self.tokenizer,
+                    prompt=prompt_text,
+                    image_file=self.image_path,
+                    output_path=out_dir,
+                    base_size=base_size,
+                    image_size=image_size,
+                    crop_mode=crop_mode,
+                    save_results=False,
+                    test_compress=self.params.get('test_compress', False),
+                    eval_mode=True,
+                )
 
             logger.info("OCR inference complete")
             self.progress_signal.emit("📊 Processing results...")

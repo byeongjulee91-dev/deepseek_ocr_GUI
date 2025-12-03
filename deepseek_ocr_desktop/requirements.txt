@@ -25,5 +25,8 @@ einops
 addict
 easydict
 
+# vLLM Client (OpenAI-compatible API)
+openai>=1.0.0
+
 # PyInstaller (for packaging)
 pyinstaller>=6.0.0

@@ -51,7 +51,16 @@ def main():
     config = AppConfig()
     model_name = config.get_model_name()
     hf_home = config.get_hf_home()
-    app_logger.info(f"Configuration loaded - Model: {model_name}, HF_HOME: {hf_home}")
+
+    # Load vLLM configuration
+    use_vllm = config.get_use_vllm()
+    vllm_endpoint = config.get_vllm_endpoint()
+    vllm_api_key = config.get_vllm_api_key()
+
+    if use_vllm:
+        app_logger.info(f"Configuration loaded - Mode: vLLM, Endpoint: {vllm_endpoint}, Model: {model_name}")
+    else:
+        app_logger.info(f"Configuration loaded - Mode: Local, Model: {model_name}, HF_HOME: {hf_home}")
 
     # Create model manager
     app_logger.info("Creating model manager...")
@@ -87,9 +96,19 @@ def main():
     # Connect model loaded signal
     model_manager.model_loaded_signal.connect(on_model_loaded)
 
-    # Start loading model
-    app_logger.info(f"Starting model loading: {model_name}")
-    model_manager.load_model_async(model_name, hf_home)
+    # Start loading model or connecting to vLLM
+    if use_vllm:
+        app_logger.info(f"Connecting to vLLM endpoint: {vllm_endpoint}")
+        model_manager.load_model_async(
+            model_name,
+            hf_home,
+            use_vllm=True,
+            vllm_endpoint=vllm_endpoint,
+            vllm_api_key=vllm_api_key
+        )
+    else:
+        app_logger.info(f"Starting local model loading: {model_name}")
+        model_manager.load_model_async(model_name, hf_home)
 
     # Show loading dialog (blocks until model loads or error)
     app_logger.debug("Showing loading dialog...")

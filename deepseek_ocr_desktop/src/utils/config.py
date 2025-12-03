@@ -32,6 +32,31 @@ class AppConfig:
         """Set HuggingFace cache directory"""
         self.settings.setValue("model/hf_home", path)
 
+    # vLLM Configuration
+    def get_use_vllm(self) -> bool:
+        """Get whether to use vLLM remote endpoint instead of local model"""
+        return self.settings.value("vllm/use_vllm", False, type=bool)
+
+    def set_use_vllm(self, enabled: bool):
+        """Set whether to use vLLM remote endpoint"""
+        self.settings.setValue("vllm/use_vllm", enabled)
+
+    def get_vllm_endpoint(self) -> str:
+        """Get vLLM endpoint URL"""
+        return self.settings.value("vllm/endpoint", "http://localhost:8000/v1")
+
+    def set_vllm_endpoint(self, endpoint: str):
+        """Set vLLM endpoint URL"""
+        self.settings.setValue("vllm/endpoint", endpoint)
+
+    def get_vllm_api_key(self) -> str:
+        """Get vLLM API key (optional)"""
+        return self.settings.value("vllm/api_key", "")
+
+    def set_vllm_api_key(self, api_key: str):
+        """Set vLLM API key"""
+        self.settings.setValue("vllm/api_key", api_key)
+
     # Processing Configuration
     def get_base_size(self) -> int:
         """Get base processing size"""

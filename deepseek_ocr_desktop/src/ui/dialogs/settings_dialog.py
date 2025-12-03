@@ -135,8 +135,53 @@ class SettingsDialog(QDialog):
         tab = QWidget()
         layout = QVBoxLayout()
 
-        # Model group
-        model_group = QGroupBox("Model Configuration")
+        # vLLM group
+        vllm_group = QGroupBox("vLLM Remote Inference (Optional)")
+        vllm_layout = QFormLayout()
+
+        self.use_vllm_check = QCheckBox("Use vLLM remote endpoint instead of local model")
+        self.use_vllm_check.setToolTip("Connect to a remote vLLM server instead of loading model locally")
+        self.use_vllm_check.toggled.connect(self.on_use_vllm_toggled)
+        vllm_layout.addRow("Enable vLLM:", self.use_vllm_check)
+
+        self.vllm_endpoint_edit = QLineEdit()
+        self.vllm_endpoint_edit.setPlaceholderText("http://localhost:8000/v1")
+        self.vllm_endpoint_edit.setToolTip("vLLM endpoint URL (OpenAI-compatible API)")
+        vllm_layout.addRow("Endpoint URL:", self.vllm_endpoint_edit)
+
+        self.vllm_api_key_edit = QLineEdit()
+        self.vllm_api_key_edit.setPlaceholderText("(optional)")
+        self.vllm_api_key_edit.setToolTip("API key for authentication (leave empty if not required)")
+        self.vllm_api_key_edit.setEchoMode(QLineEdit.Password)
+        vllm_layout.addRow("API Key:", self.vllm_api_key_edit)
+
+        # Test Connection button
+        self.test_connection_button = QPushButton("🔍 Test Connection")
+        self.test_connection_button.setToolTip("Test connection to vLLM endpoint")
+        self.test_connection_button.clicked.connect(self.test_vllm_connection)
+        self.test_connection_button.setStyleSheet("""
+            QPushButton {
+                background-color: #3b82f6;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 8px 16px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #2563eb;
+            }
+            QPushButton:disabled {
+                background-color: #6b7280;
+            }
+        """)
+        vllm_layout.addRow("", self.test_connection_button)
+
+        vllm_group.setLayout(vllm_layout)
+        layout.addWidget(vllm_group)
+
+        # Model group (local mode)
+        self.model_group = QGroupBox("Local Model Configuration")
         model_layout = QFormLayout()
 
         self.model_name_edit = QLineEdit()
@@ -157,13 +202,13 @@ class SettingsDialog(QDialog):
 
         model_layout.addRow("HF Cache:", hf_home_row)
 
-        model_group.setLayout(model_layout)
-        layout.addWidget(model_group)
+        self.model_group.setLayout(model_layout)
+        layout.addWidget(self.model_group)
 
         # Info
         info = QLabel(
             "⚠️ Changing model settings requires restarting the application.\n"
-            "Model will be downloaded on next startup if not cached."
+            "Model will be downloaded on next startup if not cached (local mode only)."
         )
         info.setWordWrap(True)
         info.setStyleSheet("color: #f59e0b; padding: 10px; background-color: rgba(245, 158, 11, 0.1); border-radius: 6px;")
@@ -172,6 +217,106 @@ class SettingsDialog(QDialog):
         layout.addStretch()
         tab.setLayout(layout)
         return tab
+
+    def on_use_vllm_toggled(self, checked: bool):
+        """Handle vLLM checkbox toggle"""
+        # Enable/disable vLLM fields
+        self.vllm_endpoint_edit.setEnabled(checked)
+        self.vllm_api_key_edit.setEnabled(checked)
+        self.test_connection_button.setEnabled(checked)
+
+        # Enable/disable local model fields
+        self.model_name_edit.setEnabled(not checked)
+        self.hf_home_edit.setEnabled(not checked)
+        self.model_group.setEnabled(not checked)
+
+    def test_vllm_connection(self):
+        """Test connection to vLLM endpoint"""
+        from PySide6.QtWidgets import QProgressDialog
+        from PySide6.QtCore import QTimer
+
+        # Get current values
+        endpoint = self.vllm_endpoint_edit.text().strip()
+        api_key = self.vllm_api_key_edit.text().strip()
+        model_name = self.model_name_edit.text().strip() or "deepseek-ai/DeepSeek-OCR"
+
+        # Validate endpoint
+        if not endpoint:
+            QMessageBox.warning(
+                self,
+                "Missing Endpoint",
+                "Please enter a vLLM endpoint URL.\n\n"
+                "Example: http://localhost:8000/v1"
+            )
+            return
+
+        # Show progress dialog
+        progress = QProgressDialog("Testing connection to vLLM endpoint...", None, 0, 0, self)
+        progress.setWindowTitle("Testing Connection")
+        progress.setWindowModality(Qt.WindowModal)
+        progress.setCancelButton(None)
+        progress.setMinimumDuration(0)
+        progress.setValue(0)
+
+        # Import VLLMClient
+        try:
+            from ...core.vllm_client import VLLMClient
+        except ImportError as e:
+            progress.close()
+            QMessageBox.critical(
+                self,
+                "Import Error",
+                f"Failed to import VLLMClient:\n{str(e)}\n\n"
+                "Make sure 'openai' package is installed:\n"
+                "pip install openai"
+            )
+            return
+
+        # Test connection in a timer to avoid blocking UI
+        def do_test():
+            try:
+                # Create client
+                client = VLLMClient(
+                    endpoint=endpoint,
+                    api_key=api_key if api_key else None,
+                    model_name=model_name
+                )
+
+                # Test connection
+                success, message = client.test_connection()
+
+                # Close progress dialog
+                progress.close()
+
+                # Show result
+                if success:
+                    QMessageBox.information(
+                        self,
+                        "Connection Successful",
+                        f"Successfully connected to vLLM endpoint!\n\n{message}"
+                    )
+                else:
+                    QMessageBox.warning(
+                        self,
+                        "Connection Failed",
+                        f"Failed to connect to vLLM endpoint:\n\n{message}\n\n"
+                        "Please check:\n"
+                        "• Endpoint URL is correct (must end with /v1)\n"
+                        "• vLLM server is running\n"
+                        "• Network connection is available\n"
+                        "• Firewall allows the connection"
+                    )
+
+            except Exception as e:
+                progress.close()
+                QMessageBox.critical(
+                    self,
+                    "Test Failed",
+                    f"Error testing connection:\n\n{type(e).__name__}: {str(e)}"
+                )
+
+        # Run test after a short delay to show progress dialog
+        QTimer.singleShot(100, do_test)
 
     def create_processing_tab(self) -> QWidget:
         """Create processing settings tab
@@ -405,6 +550,15 @@ class SettingsDialog(QDialog):
 
     def load_settings(self):
         """Load current settings from config"""
+        # vLLM settings
+        use_vllm = self.config.get_use_vllm()
+        self.use_vllm_check.setChecked(use_vllm)
+        self.vllm_endpoint_edit.setText(self.config.get_vllm_endpoint())
+        self.vllm_api_key_edit.setText(self.config.get_vllm_api_key())
+
+        # Trigger toggle to enable/disable fields
+        self.on_use_vllm_toggled(use_vllm)
+
         # Model settings
         self.model_name_edit.setText(self.config.get_model_name())
         self.hf_home_edit.setText(self.config.get_hf_home())
@@ -475,6 +629,11 @@ class SettingsDialog(QDialog):
 
     def save_settings(self):
         """Save settings to config"""
+        # vLLM settings
+        self.config.set_use_vllm(self.use_vllm_check.isChecked())
+        self.config.set_vllm_endpoint(self.vllm_endpoint_edit.text())
+        self.config.set_vllm_api_key(self.vllm_api_key_edit.text())
+
         # Model settings
         self.config.set_model_name(self.model_name_edit.text())
         self.config.set_hf_home(self.hf_home_edit.text())
@@ -499,11 +658,17 @@ class SettingsDialog(QDialog):
         self.config.sync()
 
         # Show success message
+        msg = "Settings have been saved successfully!\n\n"
+        msg += "Font size changes will be applied immediately.\n\n"
+        if self.use_vllm_check.isChecked():
+            msg += "⚠️ vLLM mode enabled - restart the application to connect to remote endpoint."
+        else:
+            msg += "⚠️ Model changes require restarting the application."
+
         QMessageBox.information(
             self,
             "Settings Saved",
-            "Settings have been saved successfully!\n\n"
-            "Font size changes will be applied immediately."
+            msg
         )
 
         self.accept()
@@ -522,13 +687,24 @@ class SettingsDialog(QDialog):
 
         if reply == QMessageBox.Yes:
             # Reset to defaults
+            # vLLM settings
+            self.use_vllm_check.setChecked(False)
+            self.vllm_endpoint_edit.setText("http://localhost:8000/v1")
+            self.vllm_api_key_edit.setText("")
+            self.on_use_vllm_toggled(False)
+
+            # Model settings
             self.model_name_edit.setText("deepseek-ai/DeepSeek-OCR")
             self.hf_home_edit.setText("~/.cache/huggingface")
+
+            # Processing settings
             self.base_size_spin.setValue(1024)
             self.image_size_spin.setValue(640)
             self.crop_mode_check.setChecked(True)
             self.test_compress_check.setChecked(False)
             self.include_caption_check.setChecked(False)
+
+            # PDF settings
             self.pdf_dpi_spin.setValue(144)
             self.extract_images_check.setChecked(True)
 

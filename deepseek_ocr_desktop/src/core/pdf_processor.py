@@ -1,6 +1,7 @@
 """
 PDF Processor
 QThread-based worker for processing multi-page PDF documents
+Supports both local transformer model and remote vLLM endpoint
 Adapted from backend/main.py /api/process-pdf endpoint
 """
 
@@ -23,6 +24,7 @@ from ..utils.pdf_utils import (
 from ..utils.format_converter import DocumentConverter
 from .prompt_builder import build_prompt
 from .coordinate_parser import parse_detections, clean_grounding_text
+from .vllm_client import VLLMClient
 from ..utils.logger import get_logger, log_pdf_page
 
 # Initialize logger
@@ -42,8 +44,8 @@ class PDFWorker(QThread):
         """Initialize PDF worker
 
         Args:
-            model: DeepSeek OCR model
-            tokenizer: Model tokenizer
+            model: DeepSeek OCR model or VLLMClient
+            tokenizer: Model tokenizer (None for vLLM mode)
             pdf_path: Path to PDF file
             params: Processing parameters
         """
@@ -53,8 +55,10 @@ class PDFWorker(QThread):
         self.pdf_path = pdf_path
         self.params = params
         self.is_cancelled = False
+        self.is_vllm = isinstance(model, VLLMClient)
 
         logger.info(f"PDFWorker initialized for: {pdf_path}")
+        logger.debug(f"Mode: {'vLLM' if self.is_vllm else 'Local'}")
         logger.debug(f"Parameters: {params}")
 
     def cancel(self):
@@ -261,18 +265,31 @@ class PDFWorker(QThread):
 
             # Perform OCR inference
             logger.info(f"Page {page_num}: Running OCR inference...")
-            result_text = self.model.infer(
-                self.tokenizer,
-                prompt=prompt,
-                image_file=temp_img_path,
-                output_path=out_dir,
-                base_size=kwargs.get('base_size', 1024),
-                image_size=kwargs.get('image_size', 640),
-                crop_mode=kwargs.get('crop_mode', True),
-                save_results=False,
-                test_compress=kwargs.get('test_compress', False),
-                eval_mode=True
-            )
+            if self.is_vllm:
+                # vLLM mode: Call remote API
+                logger.debug(f"Page {page_num}: Using vLLM remote inference")
+                result_text = self.model.infer(
+                    prompt=prompt,
+                    image_file=temp_img_path,
+                    base_size=kwargs.get('base_size', 1024),
+                    image_size=kwargs.get('image_size', 640),
+                    crop_mode=kwargs.get('crop_mode', True),
+                )
+            else:
+                # Local mode: Use transformer model
+                logger.debug(f"Page {page_num}: Using local transformer model")
+                result_text = self.model.infer(
+                    self.tokenizer,
+                    prompt=prompt,
+                    image_file=temp_img_path,
+                    output_path=out_dir,
+                    base_size=kwargs.get('base_size', 1024),
+                    image_size=kwargs.get('image_size', 640),
+                    crop_mode=kwargs.get('crop_mode', True),
+                    save_results=False,
+                    test_compress=kwargs.get('test_compress', False),
+                    eval_mode=True
+                )
             logger.info(f"Page {page_num}: OCR complete - text length: {len(result_text) if isinstance(result_text, str) else 'N/A'}")
 
             # Normalize response (same as ocr_processor.py)
@@ -357,8 +374,8 @@ class PDFProcessor:
         """Initialize PDF processor
 
         Args:
-            model: DeepSeek OCR model
-            tokenizer: Model tokenizer
+            model: DeepSeek OCR model or VLLMClient
+            tokenizer: Model tokenizer (None for vLLM mode)
         """
         self.model = model
         self.tokenizer = tokenizer
