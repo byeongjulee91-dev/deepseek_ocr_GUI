@@ -114,6 +114,16 @@ def setup_logger(name: str = "DeepSeekOCR", level: int = logging.DEBUG, gui_hand
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
 
+    # Add GUI handler if provided
+    if gui_handler:
+        gui_handler.setLevel(logging.DEBUG)
+        gui_formatter = logging.Formatter(
+            '%(asctime)s | %(levelname)-8s | %(name)s | %(message)s',
+            datefmt='%H:%M:%S'
+        )
+        gui_handler.setFormatter(gui_formatter)
+        logger.addHandler(gui_handler)
+
     # Log initialization
     logger.info(f"Logger initialized. Log file: {log_file}")
 
@@ -181,5 +191,6 @@ __all__ = [
     'log_function_call',
     'log_pdf_page',
     'log_ocr_result',
-    'log_file_operation'
+    'log_file_operation',
+    'QtLogHandler'
 ]
