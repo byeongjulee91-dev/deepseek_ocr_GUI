@@ -187,6 +187,15 @@ class AppConfig:
         """Set font size for UI elements"""
         self.settings.setValue("ui/ui_font_size", size)
 
+    # Startup Configuration
+    def get_skip_startup_dialog(self) -> bool:
+        """Get whether to skip startup mode selection dialog"""
+        return self.settings.value("startup/skip_dialog", False, type=bool)
+
+    def set_skip_startup_dialog(self, skip: bool):
+        """Set whether to skip startup mode selection dialog"""
+        self.settings.setValue("startup/skip_dialog", skip)
+
     # Advanced Settings
     def get_include_caption(self) -> bool:
         """Get include caption setting"""

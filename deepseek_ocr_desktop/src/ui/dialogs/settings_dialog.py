@@ -538,6 +538,20 @@ class SettingsDialog(QDialog):
         window_group.setLayout(window_layout)
         layout.addWidget(window_group)
 
+        # Startup group
+        startup_group = QGroupBox("Startup Settings")
+        startup_layout = QVBoxLayout()
+
+        self.skip_startup_dialog_check = QCheckBox("Skip model selection dialog on startup")
+        self.skip_startup_dialog_check.setToolTip(
+            "Automatically start with saved model mode (Local/vLLM)\n"
+            "Uncheck to show mode selection dialog on next startup"
+        )
+        startup_layout.addWidget(self.skip_startup_dialog_check)
+
+        startup_group.setLayout(startup_layout)
+        layout.addWidget(startup_group)
+
         # Clear cache button
         clear_cache_button = QPushButton("🗑️ Clear Window State")
         clear_cache_button.setToolTip("Clear saved window geometry and state")
@@ -616,6 +630,9 @@ class SettingsDialog(QDialog):
         self.restore_geometry_check.setChecked(True)  # Always enabled for now
         self.restore_splitter_check.setChecked(True)
 
+        # UI settings - Startup
+        self.skip_startup_dialog_check.setChecked(self.config.get_skip_startup_dialog())
+
     def browse_hf_home(self):
         """Browse for HuggingFace cache directory"""
         directory = QFileDialog.getExistingDirectory(
@@ -679,6 +696,9 @@ class SettingsDialog(QDialog):
         self.config.set_font_size(self.font_size_spin.value())
         self.config.set_log_font_size(self.log_font_size_spin.value())
         self.config.set_ui_font_size(self.ui_font_size_spin.value())
+
+        # UI settings - Startup
+        self.config.set_skip_startup_dialog(self.skip_startup_dialog_check.isChecked())
 
         # Sync to disk
         self.config.sync()
