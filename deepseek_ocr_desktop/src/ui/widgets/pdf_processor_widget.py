@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
+from ...utils.config import AppConfig
 
 
 class PDFProcessorWidget(QWidget):
@@ -20,23 +21,29 @@ class PDFProcessorWidget(QWidget):
     dpi_changed_signal = Signal(int)  # Emits DPI value
     extract_images_changed_signal = Signal(bool)  # Emits extract images flag
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, config=None):
         """Initialize PDF processor widget
 
         Args:
             parent: Parent widget
+            config: AppConfig instance for settings
         """
         super().__init__(parent)
+        self.config = config
         self.setup_ui()
 
     def setup_ui(self):
         """Setup widget UI"""
         layout = QVBoxLayout()
 
+        # Get font size from config or use default
+        font_size = self.config.get_ui_font_size() if self.config else 12
+        title_font_size = font_size + AppConfig.TITLE_FONT_SIZE_OFFSET_LARGE
+
         # Title
-        title = QLabel("📄 PDF Processing")
-        title.setStyleSheet("font-size: 14px; font-weight: bold; padding: 5px;")
-        layout.addWidget(title)
+        self.title = QLabel("📄 PDF Processing")
+        self.title.setStyleSheet(f"font-size: {title_font_size}px; font-weight: bold; padding: 5px;")
+        layout.addWidget(self.title)
 
         # Output format selector
         format_group = QGroupBox("Output Format")
@@ -328,3 +335,14 @@ class PDFProcessorWidget(QWidget):
                     "Save Error",
                     f"Failed to save document:\n\n{str(e)}"
                 )
+
+    def refresh_font_size(self):
+        """Refresh font sizes from config"""
+        if not self.config:
+            return
+
+        font_size = self.config.get_ui_font_size()
+        title_font_size = font_size + AppConfig.TITLE_FONT_SIZE_OFFSET_LARGE
+
+        # Update title
+        self.title.setStyleSheet(f"font-size: {title_font_size}px; font-weight: bold; padding: 5px;")

@@ -28,6 +28,7 @@ from ..core.pdf_processor import PDFProcessor
 
 # Import logging utilities
 from ..utils.qt_log_handler import get_qt_log_handler, attach_qt_handler_to_logger
+from ..utils.config import AppConfig
 
 
 class MainWindow(QMainWindow):
@@ -120,7 +121,7 @@ class MainWindow(QMainWindow):
 
         # Title
         self.control_panel_title = QLabel("📋 Control Panel")
-        self.control_panel_title.setStyleSheet(f"font-size: {ui_font_size + 4}px; font-weight: bold; padding: 10px;")
+        self.control_panel_title.setStyleSheet(f"font-size: {ui_font_size + AppConfig.TITLE_FONT_SIZE_OFFSET_LARGE}px; font-weight: bold; padding: 10px;")
         layout.addWidget(self.control_panel_title)
 
         # File type toggle (Image / PDF)
@@ -153,14 +154,14 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.image_upload)
 
         # Mode selector widget (for images)
-        self.mode_selector = ModeSelectorWidget()
+        self.mode_selector = ModeSelectorWidget(config=self.config)
         self.mode_selector.mode_changed_signal.connect(self.on_mode_changed)
         self.mode_selector.find_term_changed_signal.connect(self.on_find_term_changed)
         self.mode_selector.prompt_changed_signal.connect(self.on_prompt_changed)
         layout.addWidget(self.mode_selector)
 
         # PDF processor widget (for PDFs, initially hidden)
-        self.pdf_processor_widget = PDFProcessorWidget()
+        self.pdf_processor_widget = PDFProcessorWidget(config=self.config)
         self.pdf_processor_widget.setVisible(False)
         layout.addWidget(self.pdf_processor_widget)
 
@@ -215,7 +216,7 @@ class MainWindow(QMainWindow):
 
         ui_font_size = self.config.get_ui_font_size()
         self.result_title = QLabel("📊 Result Viewer")
-        self.result_title.setStyleSheet(f"font-size: {ui_font_size + 4}px; font-weight: bold; padding: 10px;")
+        self.result_title.setStyleSheet(f"font-size: {ui_font_size + AppConfig.TITLE_FONT_SIZE_OFFSET_LARGE}px; font-weight: bold; padding: 10px;")
         result_layout.addWidget(self.result_title)
 
         self.result_viewer = ResultViewerWidget(config=self.config)
@@ -230,7 +231,7 @@ class MainWindow(QMainWindow):
         log_layout.setContentsMargins(0, 0, 0, 0)
 
         self.log_title = QLabel("📋 Application Logs")
-        self.log_title.setStyleSheet(f"font-size: {ui_font_size + 4}px; font-weight: bold; padding: 10px;")
+        self.log_title.setStyleSheet(f"font-size: {ui_font_size + AppConfig.TITLE_FONT_SIZE_OFFSET_LARGE}px; font-weight: bold; padding: 10px;")
         log_layout.addWidget(self.log_title)
 
         self.log_viewer = LogViewerWidget(config=self.config)
@@ -952,7 +953,7 @@ class MainWindow(QMainWindow):
                 color: white;
                 border: none;
                 border-radius: 8px;
-                font-size: {font_size + 2}px;
+                font-size: {font_size + AppConfig.TITLE_FONT_SIZE_OFFSET_SMALL}px;
                 font-weight: bold;
             }}
             QPushButton:hover {{
@@ -986,7 +987,7 @@ class MainWindow(QMainWindow):
         ui_font_size = self.config.get_ui_font_size()
 
         # Update Control Panel title
-        self.control_panel_title.setStyleSheet(f"font-size: {ui_font_size + 4}px; font-weight: bold; padding: 10px;")
+        self.control_panel_title.setStyleSheet(f"font-size: {ui_font_size + AppConfig.TITLE_FONT_SIZE_OFFSET_LARGE}px; font-weight: bold; padding: 10px;")
 
         # Update radio buttons
         self.image_radio.setStyleSheet(f"font-size: {ui_font_size}px;")
@@ -1000,8 +1001,12 @@ class MainWindow(QMainWindow):
         self.info_label.setStyleSheet(f"padding: 10px; color: gray; font-size: {ui_font_size - 1}px;")
 
         # Update Result Viewer and Log Viewer titles
-        self.result_title.setStyleSheet(f"font-size: {ui_font_size + 4}px; font-weight: bold; padding: 10px;")
-        self.log_title.setStyleSheet(f"font-size: {ui_font_size + 4}px; font-weight: bold; padding: 10px;")
+        self.result_title.setStyleSheet(f"font-size: {ui_font_size + AppConfig.TITLE_FONT_SIZE_OFFSET_LARGE}px; font-weight: bold; padding: 10px;")
+        self.log_title.setStyleSheet(f"font-size: {ui_font_size + AppConfig.TITLE_FONT_SIZE_OFFSET_LARGE}px; font-weight: bold; padding: 10px;")
+
+        # Update widget font sizes
+        self.mode_selector.refresh_font_size()
+        self.pdf_processor_widget.refresh_font_size()
 
     def restore_geometry(self):
         """Restore saved window geometry and state"""

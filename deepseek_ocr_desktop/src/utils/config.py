@@ -10,6 +10,11 @@ from PySide6.QtCore import QSettings
 class AppConfig:
     """Application configuration manager using QSettings"""
 
+    # Font size offset constants
+    TITLE_FONT_SIZE_OFFSET_SMALL = 2  # Offset for small titles (widget titles)
+    TITLE_FONT_SIZE_OFFSET_LARGE = 4  # Offset for large titles (panel titles)
+    DEBUG_FONT_SIZE_OFFSET = -2  # Offset for debug text (smaller than main text)
+
     def __init__(self):
         """Initialize settings with organization and application name"""
         self.settings = QSettings("DeepSeekOCR", "DesktopApp")

@@ -15,6 +15,7 @@ from PySide6.QtGui import QFont, QTextOption
 
 # Import bounding box canvas
 from .bounding_box_canvas import ImageWithBoxesWidget
+from ...utils.config import AppConfig
 
 
 class ResultViewerWidget(QWidget):
@@ -174,7 +175,7 @@ class ResultViewerWidget(QWidget):
         self.result_text_edit.setFont(font)
 
         # Update debug text edits (slightly smaller)
-        debug_font_size = max(size - 2, 8)
+        debug_font_size = max(size + AppConfig.DEBUG_FONT_SIZE_OFFSET, 8)
         debug_font = QFont("Courier New", debug_font_size)
         self.raw_text_edit.setFont(debug_font)
         self.metadata_text_edit.setFont(debug_font)
