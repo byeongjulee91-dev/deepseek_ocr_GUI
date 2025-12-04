@@ -70,56 +70,20 @@ class SettingsDialog(QDialog):
         button_layout = QHBoxLayout()
 
         self.reset_button = QPushButton("🔄 Reset All")
+        self.reset_button.setObjectName("resetButton")
         self.reset_button.clicked.connect(self.reset_all)
-        self.reset_button.setStyleSheet("""
-            QPushButton {
-                background-color: #ef4444;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                padding: 10px 20px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #dc2626;
-            }
-        """)
         button_layout.addWidget(self.reset_button)
 
         button_layout.addStretch()
 
         self.cancel_button = QPushButton("Cancel")
+        self.cancel_button.setObjectName("cancelButton")
         self.cancel_button.clicked.connect(self.reject)
-        self.cancel_button.setStyleSheet("""
-            QPushButton {
-                background-color: #6b7280;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                padding: 10px 20px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #4b5563;
-            }
-        """)
         button_layout.addWidget(self.cancel_button)
 
         self.save_button = QPushButton("💾 Save")
+        self.save_button.setObjectName("saveButton")
         self.save_button.clicked.connect(self.save_settings)
-        self.save_button.setStyleSheet("""
-            QPushButton {
-                background-color: #10b981;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                padding: 10px 20px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #059669;
-            }
-        """)
         button_layout.addWidget(self.save_button)
 
         layout.addLayout(button_layout)
@@ -173,24 +137,9 @@ class SettingsDialog(QDialog):
 
         # Test Connection button
         self.test_connection_button = QPushButton("🔍 Test Connection")
+        self.test_connection_button.setObjectName("testButton")
         self.test_connection_button.setToolTip("Test connection to vLLM endpoint")
         self.test_connection_button.clicked.connect(self.test_vllm_connection)
-        self.test_connection_button.setStyleSheet("""
-            QPushButton {
-                background-color: #3b82f6;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                padding: 8px 16px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #2563eb;
-            }
-            QPushButton:disabled {
-                background-color: #6b7280;
-            }
-        """)
         vllm_layout.addRow("", self.test_connection_button)
 
         vllm_group.setLayout(vllm_layout)
@@ -554,21 +503,9 @@ class SettingsDialog(QDialog):
 
         # Clear cache button
         clear_cache_button = QPushButton("🗑️ Clear Window State")
+        clear_cache_button.setObjectName("clearButton")
         clear_cache_button.setToolTip("Clear saved window geometry and state")
         clear_cache_button.clicked.connect(self.clear_window_state)
-        clear_cache_button.setStyleSheet("""
-            QPushButton {
-                background-color: #f59e0b;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                padding: 8px 16px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #d97706;
-            }
-        """)
         layout.addWidget(clear_cache_button)
 
         layout.addStretch()

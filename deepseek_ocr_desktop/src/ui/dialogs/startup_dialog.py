@@ -142,25 +142,14 @@ class StartupDialog(QDialog):
         button_layout.addStretch()
 
         self.cancel_button = QPushButton("Cancel")
+        self.cancel_button.setObjectName("cancelButton")
         self.cancel_button.clicked.connect(self.reject)
         button_layout.addWidget(self.cancel_button)
 
         self.start_button = QPushButton("Start")
+        self.start_button.setObjectName("startButton")
         self.start_button.setDefault(True)
         self.start_button.clicked.connect(self.on_start_clicked)
-        self.start_button.setStyleSheet("""
-            QPushButton {
-                background-color: #10b981;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                padding: 8px 20px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #059669;
-            }
-        """)
         button_layout.addWidget(self.start_button)
 
         layout.addLayout(button_layout)

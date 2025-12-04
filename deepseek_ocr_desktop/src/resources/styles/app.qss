@@ -352,6 +352,96 @@ QPushButton:disabled {
     color: #888;
 }
 
+/* Success/Confirm Button (Green) */
+QPushButton#successButton,
+QPushButton#saveButton,
+QPushButton#startButton {
+    background-color: #10b981;
+}
+
+QPushButton#successButton:hover,
+QPushButton#saveButton:hover,
+QPushButton#startButton:hover {
+    background-color: #059669;
+}
+
+QPushButton#successButton:pressed,
+QPushButton#saveButton:pressed,
+QPushButton#startButton:pressed {
+    background-color: #047857;
+}
+
+/* Danger/Warning Button (Red) */
+QPushButton#dangerButton,
+QPushButton#resetButton {
+    background-color: #ef4444;
+}
+
+QPushButton#dangerButton:hover,
+QPushButton#resetButton:hover {
+    background-color: #dc2626;
+}
+
+QPushButton#dangerButton:pressed,
+QPushButton#resetButton:pressed {
+    background-color: #b91c1c;
+}
+
+/* Cancel/Secondary Button (Gray) */
+QPushButton#cancelButton,
+QPushButton#secondaryButton {
+    background-color: #6b7280;
+}
+
+QPushButton#cancelButton:hover,
+QPushButton#secondaryButton:hover {
+    background-color: #4b5563;
+}
+
+QPushButton#cancelButton:pressed,
+QPushButton#secondaryButton:pressed {
+    background-color: #374151;
+}
+
+/* Info/Test Button (Blue variant) */
+QPushButton#infoButton,
+QPushButton#testButton {
+    background-color: #3b82f6;
+    padding: 8px 16px;
+}
+
+QPushButton#infoButton:hover,
+QPushButton#testButton:hover {
+    background-color: #2563eb;
+}
+
+QPushButton#infoButton:pressed,
+QPushButton#testButton:pressed {
+    background-color: #1d4ed8;
+}
+
+QPushButton#infoButton:disabled,
+QPushButton#testButton:disabled {
+    background-color: #6b7280;
+}
+
+/* Warning Button (Orange) */
+QPushButton#warningButton,
+QPushButton#clearButton {
+    background-color: #f59e0b;
+    padding: 8px 16px;
+}
+
+QPushButton#warningButton:hover,
+QPushButton#clearButton:hover {
+    background-color: #d97706;
+}
+
+QPushButton#warningButton:pressed,
+QPushButton#clearButton:pressed {
+    background-color: #b45309;
+}
+
 /* Group Box */
 QGroupBox {
     border: 2px solid #444;
