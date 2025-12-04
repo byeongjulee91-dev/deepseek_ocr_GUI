@@ -21,34 +21,10 @@ datas = [
 
 # Hidden imports - modules that PyInstaller might miss
 hiddenimports = [
-    # Application modules (absolute imports)
-    'core',
-    'core.model_manager',
-    'core.ocr_processor',
-    'core.pdf_processor',
-    'core.prompt_builder',
-    'core.coordinate_parser',
-    'core.vllm_client',
-    'ui',
-    'ui.main_window',
-    'ui.dialogs',
-    'ui.dialogs.model_loading_dialog',
-    'ui.dialogs.startup_dialog',
-    'ui.dialogs.settings_dialog',
-    'ui.widgets',
-    'ui.widgets.image_upload_widget',
-    'ui.widgets.result_viewer_widget',
-    'ui.widgets.mode_selector_widget',
-    'ui.widgets.pdf_processor_widget',
-    'ui.widgets.advanced_settings_widget',
-    'ui.widgets.log_viewer_widget',
-    'ui.widgets.bounding_box_canvas',
-    'utils',
-    'utils.config',
-    'utils.logger',
-    'utils.qt_log_handler',
-    'utils.pdf_utils',
-    'utils.format_converter',
+    # Application modules (collected automatically)
+    *collect_submodules('core'),
+    *collect_submodules('ui'),
+    *collect_submodules('utils'),
 
     # PySide6 modules
     'PySide6.QtCore',
