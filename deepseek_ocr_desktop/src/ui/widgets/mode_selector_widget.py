@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
     QButtonGroup, QPushButton, QLineEdit, QTextEdit, QGroupBox
 )
 from PySide6.QtCore import Qt, Signal
-from ...utils.config import AppConfig
+from utils.config import AppConfig
 
 
 class ModeSelectorWidget(QWidget):

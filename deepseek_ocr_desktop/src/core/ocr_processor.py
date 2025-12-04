@@ -12,10 +12,10 @@ from typing import Optional
 from PySide6.QtCore import QThread, Signal
 from PIL import Image
 
-from .prompt_builder import build_prompt
-from .coordinate_parser import parse_detections, clean_grounding_text
-from .vllm_client import VLLMClient
-from ..utils.logger import get_logger
+from core.prompt_builder import build_prompt
+from core.coordinate_parser import parse_detections, clean_grounding_text
+from core.vllm_client import VLLMClient
+from utils.logger import get_logger
 
 # Initialize logger
 logger = get_logger(__name__)

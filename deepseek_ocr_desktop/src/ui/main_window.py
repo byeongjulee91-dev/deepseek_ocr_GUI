@@ -12,23 +12,23 @@ from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QAction
 
 # Import widgets
-from .widgets.image_upload_widget import ImageUploadWidget
-from .widgets.result_viewer_widget import ResultViewerWidget
-from .widgets.mode_selector_widget import ModeSelectorWidget
-from .widgets.pdf_processor_widget import PDFProcessorWidget
-from .widgets.advanced_settings_widget import AdvancedSettingsWidget
-from .widgets.log_viewer_widget import LogViewerWidget
+from ui.widgets.image_upload_widget import ImageUploadWidget
+from ui.widgets.result_viewer_widget import ResultViewerWidget
+from ui.widgets.mode_selector_widget import ModeSelectorWidget
+from ui.widgets.pdf_processor_widget import PDFProcessorWidget
+from ui.widgets.advanced_settings_widget import AdvancedSettingsWidget
+from ui.widgets.log_viewer_widget import LogViewerWidget
 
 # Import dialogs
-from .dialogs.settings_dialog import SettingsDialog
+from ui.dialogs.settings_dialog import SettingsDialog
 
 # Import core components
-from ..core.ocr_processor import OCRProcessor
-from ..core.pdf_processor import PDFProcessor
+from core.ocr_processor import OCRProcessor
+from core.pdf_processor import PDFProcessor
 
 # Import logging utilities
-from ..utils.qt_log_handler import get_qt_log_handler, attach_qt_handler_to_logger
-from ..utils.config import AppConfig
+from utils.qt_log_handler import get_qt_log_handler, attach_qt_handler_to_logger
+from utils.config import AppConfig
 
 
 class MainWindow(QMainWindow):
@@ -443,7 +443,7 @@ class MainWindow(QMainWindow):
 
         # Import VLLMClient
         try:
-            from ..core.vllm_client import VLLMClient
+            from core.vllm_client import VLLMClient
         except ImportError as e:
             progress.close()
             QMessageBox.critical(

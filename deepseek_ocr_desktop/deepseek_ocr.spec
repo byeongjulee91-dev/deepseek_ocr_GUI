@@ -21,6 +21,11 @@ datas = [
 
 # Hidden imports - modules that PyInstaller might miss
 hiddenimports = [
+    # Application modules (collected automatically)
+    *collect_submodules('core'),
+    *collect_submodules('ui'),
+    *collect_submodules('utils'),
+
     # PySide6 modules
     'PySide6.QtCore',
     'PySide6.QtGui',
@@ -51,16 +56,20 @@ hiddenimports = [
     'docx',
     'markdown',
 
+    # OpenAI for vLLM
+    'openai',
+
     # Other dependencies
     'numpy',
     'safetensors',
 ]
 
 # Binaries to exclude (reduce size)
+# Note: Do NOT exclude 'unittest' - PyTorch requires it internally
 excludes = [
     # Development tools
     'pytest',
-    'unittest',
+    # 'unittest',  # PyTorch needs this!
     'test',
     'tests',
 

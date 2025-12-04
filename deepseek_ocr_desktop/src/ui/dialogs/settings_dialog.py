@@ -229,7 +229,7 @@ class SettingsDialog(QDialog):
 
         # Import VLLMClient
         try:
-            from ...core.vllm_client import VLLMClient
+            from core.vllm_client import VLLMClient
         except ImportError as e:
             progress.close()
             QMessageBox.critical(

@@ -4,16 +4,36 @@ Entry point for the PySide6 desktop GUI application
 """
 
 import sys
+import os
+
+# PyInstaller 실행 파일 환경 감지 및 경로 설정
+def _setup_paths():
+    """실행 환경에 따라 Python 경로를 설정합니다."""
+    if getattr(sys, 'frozen', False):
+        # PyInstaller로 빌드된 실행 파일
+        base_path = sys._MEIPASS
+    else:
+        # 일반 Python 실행
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    
+    # 현재 디렉토리를 src로 설정
+    if base_path not in sys.path:
+        sys.path.insert(0, base_path)
+    
+    return base_path
+
+_setup_paths()
+
 from PySide6.QtWidgets import QApplication, QDialog
 from PySide6.QtCore import Qt
 
-# Import application components
-from .core.model_manager import ModelManager
-from .ui.main_window import MainWindow
-from .ui.dialogs.model_loading_dialog import ModelLoadingDialog
-from .ui.dialogs.startup_dialog import StartupDialog
-from .utils.config import AppConfig
-from .utils.logger import setup_logger, get_logger
+# Import application components (절대 임포트 사용)
+from core.model_manager import ModelManager
+from ui.main_window import MainWindow
+from ui.dialogs.model_loading_dialog import ModelLoadingDialog
+from ui.dialogs.startup_dialog import StartupDialog
+from utils.config import AppConfig
+from utils.logger import setup_logger, get_logger
 
 # Initialize logger
 logger = setup_logger("DeepSeekOCR", level=10)  # DEBUG level
@@ -163,9 +183,13 @@ def main():
 
 
 if __name__ == "__main__":
-    # This file should not be run directly
-    # Use run.py from the project root instead
-    print("❌ Error: Do not run main.py directly!")
-    print("✅ Use: python run.py from the project root directory")
-    print("   Or: uv run run.py")
-    sys.exit(1)
+    # PyInstaller 빌드된 실행 파일인지 확인
+    if getattr(sys, 'frozen', False):
+        # PyInstaller 실행 파일 - main() 실행
+        sys.exit(main())
+    else:
+        # 개발 환경에서 직접 실행 - 경고 메시지 표시
+        print("❌ Error: Do not run main.py directly!")
+        print("✅ Use: python run.py from the project root directory")
+        print("   Or: uv run run.py")
+        sys.exit(1)
