@@ -14,8 +14,8 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QTextOption
 
 # Import bounding box canvas
-from .bounding_box_canvas import ImageWithBoxesWidget
-from ...utils.config import AppConfig
+from ui.widgets.bounding_box_canvas import ImageWithBoxesWidget
+from utils.config import AppConfig
 
 
 class ResultViewerWidget(QWidget):

@@ -10,7 +10,7 @@ from PySide6.QtCore import QThread, Signal, QObject
 import torch
 from transformers import AutoModel, AutoTokenizer
 
-from .vllm_client import VLLMClient
+from core.vllm_client import VLLMClient
 
 
 class ModelLoadWorker(QThread):

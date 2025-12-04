@@ -15,17 +15,17 @@ from PIL import Image
 import io
 
 # Import utilities
-from ..utils.pdf_utils import (
+from utils.pdf_utils import (
     pdf_to_images_high_quality,
     extract_ref_patterns,
     crop_images_from_refs,
     clean_markdown_content
 )
-from ..utils.format_converter import DocumentConverter
-from .prompt_builder import build_prompt
-from .coordinate_parser import parse_detections, clean_grounding_text
-from .vllm_client import VLLMClient
-from ..utils.logger import get_logger, log_pdf_page
+from utils.format_converter import DocumentConverter
+from core.prompt_builder import build_prompt
+from core.coordinate_parser import parse_detections, clean_grounding_text
+from core.vllm_client import VLLMClient
+from utils.logger import get_logger, log_pdf_page
 
 # Initialize logger
 logger = get_logger(__name__)
