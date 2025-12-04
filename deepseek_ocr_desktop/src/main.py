@@ -11,6 +11,7 @@ from PySide6.QtCore import Qt
 from .core.model_manager import ModelManager
 from .ui.main_window import MainWindow
 from .ui.dialogs.model_loading_dialog import ModelLoadingDialog
+from .ui.dialogs.startup_dialog import StartupDialog
 from .utils.config import AppConfig
 from .utils.logger import setup_logger, get_logger
 
@@ -52,7 +53,37 @@ def main():
     model_name = config.get_model_name()
     hf_home = config.get_hf_home()
 
-    # Load vLLM configuration
+    # Check if we should show startup dialog
+    skip_startup = config.get_skip_startup_dialog()
+
+    if not skip_startup:
+        # Show startup mode selection dialog
+        app_logger.info("Showing startup mode selection dialog...")
+        startup_dialog = StartupDialog(config)
+        result = startup_dialog.exec()
+
+        if result == QDialog.DialogCode.Rejected:
+            app_logger.warning("Startup dialog cancelled by user")
+            return 0
+
+        # Get selected mode
+        selected_mode = startup_dialog.get_mode()
+        app_logger.info(f"User selected mode: {selected_mode}")
+
+        # Update config if mode was selected
+        if selected_mode == 'vllm':
+            config.set_use_vllm(True)
+            vllm_settings = startup_dialog.get_vllm_settings()
+            config.set_vllm_endpoint(vllm_settings['endpoint'])
+            config.set_vllm_api_key(vllm_settings['api_key'])
+            config.set_vllm_timeout(vllm_settings['timeout'])
+            config.set_vllm_max_retries(vllm_settings['max_retries'])
+        else:
+            config.set_use_vllm(False)
+
+        config.sync()
+
+    # Load vLLM configuration (after potential dialog update)
     use_vllm = config.get_use_vllm()
     vllm_endpoint = config.get_vllm_endpoint()
     vllm_api_key = config.get_vllm_api_key()
