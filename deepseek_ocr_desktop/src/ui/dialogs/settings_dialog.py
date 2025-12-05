@@ -9,12 +9,15 @@ from PySide6.QtWidgets import (
     QPushButton, QFormLayout, QGroupBox, QFileDialog,
     QMessageBox, QSlider
 )
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import Qt, QSize, Signal
 from PySide6.QtGui import QFont
 
 
 class SettingsDialog(QDialog):
     """Dialog for editing application settings"""
+    
+    # Signal emitted when font settings change (for immediate UI refresh)
+    fontSettingsChanged = Signal()
 
     def __init__(self, config, parent=None):
         """Initialize settings dialog
@@ -512,26 +515,20 @@ class SettingsDialog(QDialog):
     def on_result_font_size_changed(self, size: int):
         """Handle result font size change - apply immediately"""
         self.config.set_font_size(size)
-        self.config.sync()
-        # Refresh parent window if it's MainWindow
-        if self.parent():
-            self.parent().result_viewer.refresh_settings()
+        # Emit signal to notify parent window (no sync - will sync on save/cancel)
+        self.fontSettingsChanged.emit()
 
     def on_log_font_size_changed(self, size: int):
         """Handle log font size change - apply immediately"""
         self.config.set_log_font_size(size)
-        self.config.sync()
-        # Refresh parent window if it's MainWindow
-        if self.parent():
-            self.parent().log_viewer.refresh_settings()
+        # Emit signal to notify parent window (no sync - will sync on save/cancel)
+        self.fontSettingsChanged.emit()
 
     def on_ui_font_size_changed(self, size: int):
         """Handle UI font size change - apply immediately"""
         self.config.set_ui_font_size(size)
-        self.config.sync()
-        # Refresh parent window if it's MainWindow
-        if self.parent():
-            self.parent().refresh_ui_font_size()
+        # Emit signal to notify parent window (no sync - will sync on save/cancel)
+        self.fontSettingsChanged.emit()
 
     def load_settings(self):
         """Load current settings from config"""
@@ -673,13 +670,10 @@ class SettingsDialog(QDialog):
         self.config.set_font_size(self.original_font_size)
         self.config.set_log_font_size(self.original_log_font_size)
         self.config.set_ui_font_size(self.original_ui_font_size)
-        self.config.sync()
-
-        # Refresh parent window to revert changes
-        if self.parent():
-            self.parent().result_viewer.refresh_settings()
-            self.parent().log_viewer.refresh_settings()
-            self.parent().refresh_ui_font_size()
+        self.config.sync()  # Persist reverted values
+        
+        # Emit signal to refresh UI to original state
+        self.fontSettingsChanged.emit()
 
         self.reject()
 

@@ -892,6 +892,9 @@ class MainWindow(QMainWindow):
     def open_settings(self):
         """Handle Settings menu action"""
         dialog = SettingsDialog(self.config, self)
+        # Connect signal to refresh all font sizes when font settings change
+        dialog.fontSettingsChanged.connect(self.refresh_all_font_sizes)
+        
         if dialog.exec():
             # Settings were saved, reload advanced settings
             self.advanced_settings.load_settings()
@@ -953,6 +956,17 @@ class MainWindow(QMainWindow):
         """Apply font size to cancel button (other styles from app.qss)"""
         button_font_size = font_size + AppConfig.BUTTON_FONT_SIZE_OFFSET
         self.cancel_button.setStyleSheet(f"font-size: {button_font_size}px;")
+
+    def refresh_all_font_sizes(self):
+        """Refresh all font sizes from config (called by SettingsDialog signal)"""
+        # Refresh result viewer font
+        self.result_viewer.refresh_settings()
+        
+        # Refresh log viewer font
+        self.log_viewer.refresh_settings()
+        
+        # Refresh UI font sizes
+        self.refresh_ui_font_size()
 
     def refresh_ui_font_size(self):
         """Refresh UI font sizes from config"""

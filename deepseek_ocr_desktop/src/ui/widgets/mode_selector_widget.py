@@ -169,23 +169,20 @@ class ModeSelectorWidget(QWidget):
         # Select default mode
         self.select_mode('plain_ocr')
 
-    def create_mode_button(self, mode_id: str, parent_layout):
-        """Create a mode selection button
-
+    def _get_button_stylesheet(self, mode_id: str, font_size: int) -> str:
+        """Generate the stylesheet for a mode button
+        
         Args:
             mode_id: Mode identifier
-            parent_layout: Parent layout to add button to
+            font_size: Font size in pixels
+            
+        Returns:
+            Stylesheet string for the button
         """
         mode_info = self.MODES[mode_id]
-
-        # Calculate button font size
-        font_size = self.config.get_ui_font_size() if self.config else 12
         button_font_size = font_size + AppConfig.BUTTON_FONT_SIZE_OFFSET
-
-        button = QPushButton(f"{mode_info['icon']}\n{mode_info['name']}")
-        button.setCheckable(True)
-        button.setMinimumHeight(70)
-        button.setStyleSheet(f"""
+        
+        return f"""
             QPushButton {{
                 background-color: rgba(255, 255, 255, 0.05);
                 border: 2px solid #444;
@@ -204,7 +201,25 @@ class ModeSelectorWidget(QWidget):
                 border-color: {mode_info['color']};
                 color: white;
             }}
-        """)
+        """
+
+    def create_mode_button(self, mode_id: str, parent_layout):
+        """Create a mode selection button
+
+        Args:
+            mode_id: Mode identifier
+            parent_layout: Parent layout to add button to
+        """
+        mode_info = self.MODES[mode_id]
+
+        # Calculate button font size
+        font_size = self.config.get_ui_font_size() if self.config else 12
+        button_font_size = font_size + AppConfig.BUTTON_FONT_SIZE_OFFSET
+
+        button = QPushButton(f"{mode_info['icon']}\n{mode_info['name']}")
+        button.setCheckable(True)
+        button.setMinimumHeight(70)
+        button.setStyleSheet(self._get_button_stylesheet(mode_id, button_font_size))
         button.setToolTip(mode_info['description'])
         button.clicked.connect(lambda: self.select_mode(mode_id))
 
@@ -304,24 +319,4 @@ class ModeSelectorWidget(QWidget):
 
         # Update mode button font sizes
         for mode_id, button in self.mode_buttons.items():
-            mode_info = self.MODES[mode_id]
-            button.setStyleSheet(f"""
-                QPushButton {{
-                    background-color: rgba(255, 255, 255, 0.05);
-                    border: 2px solid #444;
-                    border-radius: 8px;
-                    color: white;
-                    font-size: {button_font_size}px;
-                    font-weight: bold;
-                    padding: 10px;
-                }}
-                QPushButton:hover {{
-                    background-color: rgba(255, 255, 255, 0.1);
-                    border-color: {mode_info['color']};
-                }}
-                QPushButton:checked {{
-                    background-color: {mode_info['color']};
-                    border-color: {mode_info['color']};
-                    color: white;
-                }}
-            """)
+            button.setStyleSheet(self._get_button_stylesheet(mode_id, button_font_size))
