@@ -9,12 +9,15 @@ from PySide6.QtWidgets import (
     QPushButton, QFormLayout, QGroupBox, QFileDialog,
     QMessageBox, QSlider
 )
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import Qt, QSize, Signal
 from PySide6.QtGui import QFont
 
 
 class SettingsDialog(QDialog):
     """Dialog for editing application settings"""
+    
+    # Signal emitted when font settings change (for immediate UI refresh)
+    fontSettingsChanged = Signal()
 
     def __init__(self, config, parent=None):
         """Initialize settings dialog
@@ -25,6 +28,12 @@ class SettingsDialog(QDialog):
         """
         super().__init__(parent)
         self.config = config
+
+        # Save original font sizes for cancel/restore
+        self.original_font_size = config.get_font_size()
+        self.original_log_font_size = config.get_log_font_size()
+        self.original_ui_font_size = config.get_ui_font_size()
+
         self.setup_ui()
         self.load_settings()
 
@@ -78,7 +87,7 @@ class SettingsDialog(QDialog):
 
         self.cancel_button = QPushButton("Cancel")
         self.cancel_button.setObjectName("cancelButton")
-        self.cancel_button.clicked.connect(self.reject)
+        self.cancel_button.clicked.connect(self.on_cancel)
         button_layout.addWidget(self.cancel_button)
 
         self.save_button = QPushButton("💾 Save")
@@ -402,7 +411,7 @@ class SettingsDialog(QDialog):
         self.font_size_spin.setSingleStep(1)
         self.font_size_spin.setSuffix(" pt")
         self.font_size_spin.setToolTip("Font size for OCR result text (8-24pt)")
-        self.font_size_spin.valueChanged.connect(self.on_font_size_changed)
+        self.font_size_spin.valueChanged.connect(self.on_result_font_size_changed)
         result_font_layout.addWidget(self.font_size_spin)
 
         self.font_size_slider = QSlider(Qt.Horizontal)
@@ -446,6 +455,7 @@ class SettingsDialog(QDialog):
         self.ui_font_size_spin.setSingleStep(1)
         self.ui_font_size_spin.setSuffix(" pt")
         self.ui_font_size_spin.setToolTip("Font size for Control Panel and UI elements (8-24pt)")
+        self.ui_font_size_spin.valueChanged.connect(self.on_ui_font_size_changed)
         ui_font_layout.addWidget(self.ui_font_size_spin)
 
         self.ui_font_size_slider = QSlider(Qt.Horizontal)
@@ -458,16 +468,6 @@ class SettingsDialog(QDialog):
         ui_font_layout.addWidget(self.ui_font_size_slider)
 
         font_layout.addRow("Control Panel:", ui_font_layout)
-
-        # Preview label
-        self.font_preview_label = QLabel("AaBbCc 가나다라 123 - Preview text")
-        self.font_preview_label.setStyleSheet("""
-            padding: 10px;
-            background-color: #2d2d2d;
-            border-radius: 4px;
-            color: #d4d4d4;
-        """)
-        font_layout.addRow("Preview:", self.font_preview_label)
 
         font_group.setLayout(font_layout)
         layout.addWidget(font_group)
@@ -512,14 +512,23 @@ class SettingsDialog(QDialog):
         tab.setLayout(layout)
         return tab
 
-    def on_font_size_changed(self, size: int):
-        """Update preview label with new font size"""
-        font = QFont("Courier New", size)
-        self.font_preview_label.setFont(font)
+    def on_result_font_size_changed(self, size: int):
+        """Handle result font size change - apply immediately"""
+        self.config.set_font_size(size)
+        # Emit signal to notify parent window (no sync - will sync on save/cancel)
+        self.fontSettingsChanged.emit()
 
     def on_log_font_size_changed(self, size: int):
-        """Handle log font size change (for preview only)"""
-        pass  # Preview only uses result font size
+        """Handle log font size change - apply immediately"""
+        self.config.set_log_font_size(size)
+        # Emit signal to notify parent window (no sync - will sync on save/cancel)
+        self.fontSettingsChanged.emit()
+
+    def on_ui_font_size_changed(self, size: int):
+        """Handle UI font size change - apply immediately"""
+        self.config.set_ui_font_size(size)
+        # Emit signal to notify parent window (no sync - will sync on save/cancel)
+        self.fontSettingsChanged.emit()
 
     def load_settings(self):
         """Load current settings from config"""
@@ -553,7 +562,6 @@ class SettingsDialog(QDialog):
         font_size = self.config.get_font_size()
         self.font_size_spin.setValue(font_size)
         self.font_size_slider.setValue(font_size)
-        self.on_font_size_changed(font_size)  # Update preview
 
         log_font_size = self.config.get_log_font_size()
         self.log_font_size_spin.setValue(log_font_size)
@@ -656,6 +664,19 @@ class SettingsDialog(QDialog):
 
         self.accept()
 
+    def on_cancel(self):
+        """Handle cancel button - restore original font sizes"""
+        # Restore original font sizes
+        self.config.set_font_size(self.original_font_size)
+        self.config.set_log_font_size(self.original_log_font_size)
+        self.config.set_ui_font_size(self.original_ui_font_size)
+        self.config.sync()  # Persist reverted values
+        
+        # Emit signal to refresh UI to original state
+        self.fontSettingsChanged.emit()
+
+        self.reject()
+
     def reset_all(self):
         """Reset all settings to defaults"""
         reply = QMessageBox.warning(
@@ -700,7 +721,6 @@ class SettingsDialog(QDialog):
             self.log_font_size_slider.setValue(11)
             self.ui_font_size_spin.setValue(12)
             self.ui_font_size_slider.setValue(12)
-            self.on_font_size_changed(12)  # Update preview
 
             QMessageBox.information(
                 self,
