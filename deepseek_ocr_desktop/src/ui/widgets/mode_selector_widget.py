@@ -178,6 +178,10 @@ class ModeSelectorWidget(QWidget):
         """
         mode_info = self.MODES[mode_id]
 
+        # Calculate button font size
+        font_size = self.config.get_ui_font_size() if self.config else 12
+        button_font_size = font_size + AppConfig.BUTTON_FONT_SIZE_OFFSET
+
         button = QPushButton(f"{mode_info['icon']}\n{mode_info['name']}")
         button.setCheckable(True)
         button.setMinimumHeight(70)
@@ -187,7 +191,7 @@ class ModeSelectorWidget(QWidget):
                 border: 2px solid #444;
                 border-radius: 8px;
                 color: white;
-                font-size: 12px;
+                font-size: {button_font_size}px;
                 font-weight: bold;
                 padding: 10px;
             }}
@@ -293,6 +297,31 @@ class ModeSelectorWidget(QWidget):
 
         font_size = self.config.get_ui_font_size()
         title_font_size = font_size + AppConfig.TITLE_FONT_SIZE_OFFSET_LARGE
+        button_font_size = font_size + AppConfig.BUTTON_FONT_SIZE_OFFSET
 
         # Update title
         self.title.setStyleSheet(f"font-size: {title_font_size}px; font-weight: bold; padding: 5px;")
+
+        # Update mode button font sizes
+        for mode_id, button in self.mode_buttons.items():
+            mode_info = self.MODES[mode_id]
+            button.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: rgba(255, 255, 255, 0.05);
+                    border: 2px solid #444;
+                    border-radius: 8px;
+                    color: white;
+                    font-size: {button_font_size}px;
+                    font-weight: bold;
+                    padding: 10px;
+                }}
+                QPushButton:hover {{
+                    background-color: rgba(255, 255, 255, 0.1);
+                    border-color: {mode_info['color']};
+                }}
+                QPushButton:checked {{
+                    background-color: {mode_info['color']};
+                    border-color: {mode_info['color']};
+                    color: white;
+                }}
+            """)

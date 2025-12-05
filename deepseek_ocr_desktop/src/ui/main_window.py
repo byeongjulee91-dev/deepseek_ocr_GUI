@@ -170,17 +170,17 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.advanced_settings)
 
         # Analyze/Process button
-        self.analyze_button = QPushButton("🔍 Analyze Image")
+        self.analyze_button = QPushButton("🔍 Analyze Image (F5)")
+        self.analyze_button.setObjectName("analyzeButton")
         self.analyze_button.setEnabled(False)
-        self.analyze_button.setMinimumHeight(50)
         self._apply_analyze_button_style(ui_font_size)
         self.analyze_button.clicked.connect(self.handle_analyze_clicked)
         layout.addWidget(self.analyze_button)
 
         # Cancel button (for PDF processing, initially hidden)
         self.cancel_button = QPushButton("⏹️ Cancel Processing")
+        self.cancel_button.setObjectName("cancelProcessButton")
         self.cancel_button.setVisible(False)
-        self.cancel_button.setMinimumHeight(40)
         self._apply_cancel_button_style(ui_font_size)
         self.cancel_button.clicked.connect(self.handle_cancel_clicked)
         layout.addWidget(self.cancel_button)
@@ -548,13 +548,13 @@ class MainWindow(QMainWindow):
         if file_type == 'image':
             self.mode_selector.setVisible(True)
             self.pdf_processor_widget.setVisible(False)
-            self.analyze_button.setText("🔍 Analyze Image")
+            self.analyze_button.setText("🔍 Analyze Image (F5)")
             self.status_bar.showMessage("✅ Ready to process images")
         else:  # pdf
             self.mode_selector.setVisible(False)
             self.pdf_processor_widget.setVisible(True)
             self.pdf_processor_widget.reset_progress()
-            self.analyze_button.setText("📄 Process PDF")
+            self.analyze_button.setText("📄 Process PDF (F5)")
             self.status_bar.showMessage("✅ Ready to process PDFs")
 
         # Clear result viewer
@@ -815,7 +815,7 @@ class MainWindow(QMainWindow):
 
         # Re-enable button, hide cancel button
         self.analyze_button.setEnabled(True)
-        self.analyze_button.setText("📄 Process PDF")
+        self.analyze_button.setText("📄 Process PDF (F5)")
         self.cancel_button.setVisible(False)
 
         # Update status bar
@@ -845,7 +845,7 @@ class MainWindow(QMainWindow):
 
         # Re-enable button, hide cancel button
         self.analyze_button.setEnabled(True)
-        self.analyze_button.setText("📄 Process PDF")
+        self.analyze_button.setText("📄 Process PDF (F5)")
         self.cancel_button.setVisible(False)
 
         self.status_bar.showMessage("❌ PDF processing failed")
@@ -945,42 +945,14 @@ class MainWindow(QMainWindow):
             self.status_bar.showMessage(f"Log viewer {status}")
 
     def _apply_analyze_button_style(self, font_size: int):
-        """Apply style to analyze button with given font size"""
-        self.analyze_button.setStyleSheet(f"""
-            QPushButton {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                                            stop:0 #9333ea, stop:1 #06b6d4);
-                color: white;
-                border: none;
-                border-radius: 8px;
-                font-size: {font_size + AppConfig.TITLE_FONT_SIZE_OFFSET_SMALL}px;
-                font-weight: bold;
-            }}
-            QPushButton:hover {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                                            stop:0 #7c3aed, stop:1 #0891b2);
-            }}
-            QPushButton:disabled {{
-                background: #555;
-                color: #888;
-            }}
-        """)
+        """Apply font size to analyze button (other styles from app.qss)"""
+        button_font_size = font_size + AppConfig.BUTTON_FONT_SIZE_OFFSET
+        self.analyze_button.setStyleSheet(f"font-size: {button_font_size}px;")
 
     def _apply_cancel_button_style(self, font_size: int):
-        """Apply style to cancel button with given font size"""
-        self.cancel_button.setStyleSheet(f"""
-            QPushButton {{
-                background-color: #ef4444;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                font-size: {font_size}px;
-                font-weight: bold;
-            }}
-            QPushButton:hover {{
-                background-color: #dc2626;
-            }}
-        """)
+        """Apply font size to cancel button (other styles from app.qss)"""
+        button_font_size = font_size + AppConfig.BUTTON_FONT_SIZE_OFFSET
+        self.cancel_button.setStyleSheet(f"font-size: {button_font_size}px;")
 
     def refresh_ui_font_size(self):
         """Refresh UI font sizes from config"""
